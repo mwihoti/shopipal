@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useCallback,useEffect,useMemo,useState } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
@@ -18,10 +19,9 @@ export function Storefront() {
  const chatting=status==='submitted'||status==='streaming';
  useEffect(()=>{
   let active=true;
-  request<{products:Product[]}>('/api/catalog?max=999999').then(r=>{if(active)setProducts(r.products);}).catch(e=>{if(active)setError(e.message);}).finally(()=>{if(active)setLoading(false);});
+  request<{products:Product[]}>('/api/catalog?max=999999').then(r=>{if(active){setProducts(r.products);setPending(localStorage.getItem('shopipal.pending')||'');}}).catch(e=>{if(active)setError(e.message);}).finally(()=>{if(active)setLoading(false);});
   const code=new URLSearchParams(window.location.search).get('ref');
   if(code)request<{referral:{code:string;name:string}|null}>(`/api/referral?code=${encodeURIComponent(code)}`).then(r=>{if(active){if(r.referral){setRef(r.referral.code);setNotice(`You're shopping with ${r.referral.name}'s referral. No extra cost to you.`);}else setNotice('That referral code is not active. You can continue without it.');}}).catch(()=>{if(active)setNotice('Referral could not be verified. Shopping without attribution.');});
-  setPending(localStorage.getItem('shopipal.pending')||'');
   return()=>{active=false;};
  },[]);
  const closePanel=useCallback(()=>{setQuote(null);setReceipt(null);},[]);
@@ -39,7 +39,7 @@ export function Storefront() {
  const visible=products.filter(p=>category==='All finds'||p.category===category);
  return <>
  <div className="announcement"><span>Thoughtful finds. Your budget. Your say.</span><span><span className="status-dot"/> PayPal sandbox demo</span></div>
- <header className="site-header"><a className="brand" href="/" aria-label="Shopipal home"><span className="brand-mark"><Leaf size={22}/></span>shopipal<span className="brand-period">.</span></a><nav aria-label="Main navigation"><a href="#collection">The collection</a><a href="#how-it-works">How it works</a><a className="merchant-link" href="/dashboard">Merchant studio <ArrowUpRight size={15}/></a></nav></header>
+ <header className="site-header"><Link className="brand" href="/" aria-label="Shopipal home"><span className="brand-mark"><Leaf size={22}/></span>shopipal<span className="brand-period">.</span></Link><nav aria-label="Main navigation"><a href="#collection">The collection</a><a href="#how-it-works">How it works</a><Link className="merchant-link" href="/dashboard">Merchant studio <ArrowUpRight size={15}/></Link></nav></header>
  <main className="store-main"><section className="hero"><div className="hero-copy"><span className="pill"><span className="status-dot"/> A MORE THOUGHTFUL WAY TO SHOP</span><h1>A little help.<br/>A <em>great find.</em></h1><p>Tell us what you’re looking for. We’ll find the good stuff, keep your budget in mind, and leave the final decision to you.</p><a className="hero-link" href="#collection">Explore the collection <ArrowDown size={17}/></a><div className="hero-trust"><span><Check size={15}/> Within your budget</span><span><ShieldCheck size={15}/> Always your approval</span></div></div>
  <section className="chat-panel" aria-label="Shopping assistant"><div className="chat-header"><span className="assistant-mark"><Sparkles size={18}/></span><div><strong>Your shopping pal</strong><small><span className="status-dot"/> Here to help you find your thing</small></div><span className="chat-label">LET’S FIND IT</span></div>
  <div className="chat-content" aria-live="polite">{messages.length===0?<><span className="eyebrow">LESS SCROLLING. MORE FINDING.</span><h2>What’s on your wishlist?</h2><p>Running shoes for your next adventure?<br/>An everyday bag that goes everywhere?<br/>Just ask. I’ll take a look.</p><div className="suggestions">{['Running shoes under $80','An everyday bag under $50','Something for my next run'].map(s=><button key={s} onClick={()=>ask(s)}>{s}<ArrowUpRight size={14}/></button>)}</div></>:messages.map(m=><div key={m.id} className={`chat-message ${m.role}`}><span className="eyebrow">{m.role==='user'?'YOU':'YOUR PAL'}</span>{m.parts.map((part,i)=>{
@@ -58,7 +58,7 @@ export function Storefront() {
  <section id="collection" className="collection"><div className="section-heading"><div><span className="eyebrow">SMALL COLLECTION. GOOD CHOICES.</span><h2>Meet your next favorite<span>.</span></h2></div><p>Everyday essentials, a little more considered.</p></div><div className="collection-toolbar"><div className="category-tabs" role="group" aria-label="Product category">{['All finds','Footwear','Carry','Essentials'].map(c=><button key={c} aria-pressed={category===c} className={category===c?'active':''} onClick={()=>setCategory(c)}>{c}</button>)}</div><label className="budget-control">My budget <span>$</span><input aria-label="Budget in dollars" type="number" min="1" max="80" value={budget} onChange={e=>setBudget(Math.max(1,Math.min(80,Number(e.target.value)||1)))}/><span>USD</span></label></div>
  {loading?<p className="empty-state">Gathering the good finds…</p>:visible.length?<div className="product-grid">{visible.map(p=><ProductCard key={p.id} product={p} onSelect={p=>void select(p)}/>)}</div>:<p className="empty-state">The collection isn’t available yet. Run the database setup and refresh.</p>}<p className="collection-note">A curated demo collection. Product illustrations represent sample items.</p></section>
  <section className="how-section" id="how-it-works"><div><span className="eyebrow">A LITTLE LESS FRICTION</span><h2>Good shopping.<br/>On your terms.</h2></div><div className="how-step"><MessageCircle size={24}/><span>01 / TELL US</span><h3>Start with a thought.</h3><p>A need, a budget, a favorite color. Your pal does the searching.</p></div><div className="how-step"><Compass size={24}/><span>02 / FIND YOUR FIT</span><h3>Consider the good ones.</h3><p>A few thoughtful matches. Clear prices. No endless scrolling.</p></div><div className="how-step"><ShieldCheck size={24}/><span>03 / MAKE IT YOURS</span><h3>You have the final say.</h3><p>Review every detail. Approve your choice. Pay with PayPal sandbox.</p></div></section>
- </main><footer className="site-footer"><a className="brand" href="/">shopipal.</a><p>A little help goes a long way.</p><span>Built for the PayPal AI Hackathon · Sandbox only</span></footer>
+ </main><footer className="site-footer"><Link className="brand" href="/">shopipal.</Link><p>A little help goes a long way.</p><span>Built for the PayPal AI Hackathon · Sandbox only</span></footer>
  {quote||receipt?<PurchaseDialog onClose={closePanel}>{quote?<ApprovalCard key={quote.id} quote={quote} onClose={()=>setQuote(null)} onComplete={onComplete}/>:receipt?<ReceiptCard receipt={receipt} onClose={()=>setReceipt(null)} onCheck={()=>void checkPayment()}/>:null}</PurchaseDialog>:null}
  </>;
 }
