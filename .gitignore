@@ -8,3 +8,5 @@ playwright-report/
 test-results/
 *.tsbuildinfo
 /AGENTS.md
+
+/next-env.d.ts

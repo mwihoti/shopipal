@@ -14,21 +14,21 @@ The scripts load `.env.local`; already-exported environment variables take prece
 1. Import `mwihoti/shopipal` into Vercel as a Next.js project, root directory `.` and Node 24.x.
 2. Configure the following environment variables for the target deployment:
 
-| Variable | Value |
-| --- | --- |
-| `DATABASE_URL` | Turso libSQL URL |
-| `DATABASE_AUTH_TOKEN` | Database token |
-| `PAYPAL_CLIENT_ID` | Sandbox merchant app client ID |
-| `NEXT_PUBLIC_PAYPAL_CLIENT_ID` | The same sandbox client ID |
-| `PAYPAL_CLIENT_SECRET` | Sandbox merchant app secret |
-| `PAYPAL_ENVIRONMENT` | `SANDBOX` |
-| `OPENROUTER_API_KEY` | OpenRouter key |
-| `OPENROUTER_MODEL` | Exact tool-capable model ID |
-| `DASHBOARD_PASSPHRASE` | Long unique demo merchant passphrase |
-| `SESSION_SECRET` | Random secret, at least 32 characters |
-| `SPENDING_CAP_USD` | `80` or lower |
-| `MERCHANT_NAME` | Demo business display name |
-| `APP_URL` | Canonical application origin, with scheme and no path |
+| Variable                       | Value                                                 |
+| ------------------------------ | ----------------------------------------------------- |
+| `DATABASE_URL`                 | Turso libSQL URL                                      |
+| `DATABASE_AUTH_TOKEN`          | Database token                                        |
+| `PAYPAL_CLIENT_ID`             | Sandbox merchant app client ID                        |
+| `NEXT_PUBLIC_PAYPAL_CLIENT_ID` | The same sandbox client ID                            |
+| `PAYPAL_CLIENT_SECRET`         | Sandbox merchant app secret                           |
+| `PAYPAL_ENVIRONMENT`           | `SANDBOX`                                             |
+| `OPENROUTER_API_KEY`           | OpenRouter key                                        |
+| `OPENROUTER_MODEL`             | Exact tool-capable model ID                           |
+| `DASHBOARD_PASSPHRASE`         | Long unique demo merchant passphrase                  |
+| `SESSION_SECRET`               | Random secret, at least 32 characters                 |
+| `SPENDING_CAP_USD`             | `80` or lower                                         |
+| `MERCHANT_NAME`                | Demo business display name                            |
+| `APP_URL`                      | Canonical application origin, with scheme and no path |
 
 3. Deploy the tested commit. Public client variables are substituted during build, so setting the client ID requires rebuilding.
 4. On preview deployments with varying origins, omit `APP_URL` to validate against the actual request origin. With a fixed canonical origin, keep `APP_URL` matching it exactly.

@@ -19,6 +19,11 @@ export type PayPalOrder = {
 };
 async function token() {
   sandbox();
+  if (
+    process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID &&
+    process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID !== required("PAYPAL_CLIENT_ID")
+  )
+    throw new AppError(503, "PayPal public and server client IDs must match.");
   const response = await fetch(`${base}/v1/oauth2/token`, {
     method: "POST",
     headers: {

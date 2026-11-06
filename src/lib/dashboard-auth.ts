@@ -7,7 +7,13 @@ export function equal(a: string, b: string) {
   return x.length === y.length && timingSafeEqual(x, y);
 }
 export function dashboardToken(expiry: number) {
-  const signature = createHmac("sha256", required("SESSION_SECRET"))
+  const secret = required("SESSION_SECRET");
+  if (secret.length < 32)
+    throw new AppError(
+      503,
+      "SESSION_SECRET must contain at least 32 characters.",
+    );
+  const signature = createHmac("sha256", secret)
     .update(`dashboard:${expiry}`)
     .digest("hex");
   return `${expiry}.${signature}`;

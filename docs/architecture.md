@@ -31,19 +31,19 @@ Commission is integer cents multiplied by the snapshotted basis-point rate, roun
 
 ## HTTP interfaces
 
-| Route | Behavior |
-| --- | --- |
-| `POST /api/chat` | Text conversation, shopper budget, optional referral; streams model text and tool results |
-| `GET /api/catalog?q=&max=` | Catalog search; `max` is integer cents |
-| `GET /api/referral?code=` | Resolve an active creator code |
-| `POST /api/quotes` | `{ productId, budgetCents, ref? }`; returns a server-priced public quote |
-| `POST /api/orders` | `{ quoteId, approved: true }`; returns internal and PayPal order identifiers |
-| `POST /api/orders/:id/capture` | Capture or reconcile an approved owned order |
-| `GET /api/orders/:id` | Read owned receipt and reconcile existing remote capture |
-| `POST /api/dashboard/login` | Exchange merchant passphrase for an expiring signed cookie |
-| `POST /api/dashboard/logout` | Delete merchant cookie |
-| `GET /api/dashboard` | Authenticated, payer-free order report |
-| `GET /api/health` | Sanitized configuration/database readiness |
+| Route                          | Behavior                                                                                  |
+| ------------------------------ | ----------------------------------------------------------------------------------------- |
+| `POST /api/chat`               | Text conversation, shopper budget, optional referral; streams model text and tool results |
+| `GET /api/catalog?q=&max=`     | Catalog search; `max` is integer cents                                                    |
+| `GET /api/referral?code=`      | Resolve an active creator code                                                            |
+| `POST /api/quotes`             | `{ productId, budgetCents, ref? }`; returns a server-priced public quote                  |
+| `POST /api/orders`             | `{ quoteId, approved: true }`; returns internal and PayPal order identifiers              |
+| `POST /api/orders/:id/capture` | Capture or reconcile an approved owned order                                              |
+| `GET /api/orders/:id`          | Read owned receipt and reconcile existing remote capture                                  |
+| `POST /api/dashboard/login`    | Exchange merchant passphrase for an expiring signed cookie                                |
+| `POST /api/dashboard/logout`   | Delete merchant cookie                                                                    |
+| `GET /api/dashboard`           | Authenticated, payer-free order report                                                    |
+| `GET /api/health`              | Sanitized configuration/database readiness                                                |
 
 Errors are `{ error, code }` with appropriate status codes. Mutations reject foreign/missing origins, malformed input, and oversized bodies. Payment and chat requests have session/IP limits; chat also has an application-wide daily limit. Hosted IP handling assumes the deployment platform normalizes its forwarding headers. Rate limits are prototype abuse controls, not a replacement for platform traffic protection.
 
