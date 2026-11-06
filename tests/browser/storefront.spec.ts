@@ -9,6 +9,10 @@ test("catalog filters, referral attribution, review approval, and keyboard dismi
   await expect(
     page.getByText("You're shopping with Alice's referral."),
   ).toBeVisible();
+  await page.screenshot({
+    path: test.info().outputPath("storefront-desktop.png"),
+    fullPage: true,
+  });
   await page.getByRole("button", { name: "Carry", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Daybreak Pack" }),
@@ -17,9 +21,13 @@ test("catalog filters, referral attribution, review approval, and keyboard dismi
     page.getByRole("heading", { name: "Trail Runner", exact: true }),
   ).toHaveCount(0);
   await page.getByRole("button", { name: "Footwear", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Review Trail Runner", exact: true })
-    .click();
+  const [quoteResponse] = await Promise.all([
+    page.waitForResponse((r) => r.url().endsWith("/api/quotes")),
+    page
+      .getByRole("button", { name: "Review Trail Runner", exact: true })
+      .click(),
+  ]);
+  expect(quoteResponse.status()).toBe(200);
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByText("$74.00", { exact: true })).toBeVisible();
   await expect(
@@ -35,7 +43,9 @@ test("rejects products exceeding the shopper budget", async ({ page }) => {
   await page
     .getByRole("button", { name: "Review Trail Runner", exact: true })
     .click();
-  await expect(page.getByRole("alert")).toContainText("exceeds your budget");
+  await expect(
+    page.getByRole("alert").filter({ hasText: "exceeds your budget" }),
+  ).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 test("mobile collection fits the viewport", async ({ page }) => {
@@ -44,6 +54,10 @@ test("mobile collection fits the viewport", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Meet your next favorite." }),
   ).toBeVisible();
+  await page.screenshot({
+    path: test.info().outputPath("storefront-mobile.png"),
+    fullPage: true,
+  });
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,

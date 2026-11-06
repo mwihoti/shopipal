@@ -3,7 +3,12 @@ export default defineConfig({
   testDir: "tests/browser",
   fullyParallel: false,
   use: { baseURL: "http://127.0.0.1:3107", trace: "retain-on-failure" },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    {
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"], channel: "chromium" },
+    },
+  ],
   webServer: {
     command:
       "npm run db:migrate && npm run db:seed && npm run dev -- --hostname 127.0.0.1 --port 3107",
