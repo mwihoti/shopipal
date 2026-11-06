@@ -1,16 +1,168 @@
-'use client';
-import Link from 'next/link';
-import { useState } from 'react';
-import { ShieldCheck,X,Check,ExternalLink } from 'lucide-react';
-import { money,commission } from '@/lib/money';
-import type { PublicQuote } from '@/lib/quotes';
-import type { Receipt } from '@/lib/orders';
-import { PayPalButtons } from './PayPalButtons';
-export function ApprovalCard({quote,onClose,onComplete}:{quote:PublicQuote;onClose:()=>void;onComplete:(r:Receipt)=>void}) {
- const [approved,setApproved]=useState(false);
- return <aside className="review-panel" aria-label="Purchase review"><div className="panel-header"><span className="eyebrow">YOUR PURCHASE REVIEW</span><button className="icon-button" onClick={onClose} aria-label="Close purchase review"><X size={19}/></button></div><div className="review-icon"><ShieldCheck size={28}/></div><h2>A great find.<br/>Your call.</h2><p className="muted">Take a moment to review. You always have the final say.</p><dl className="review-list"><div><dt>Item</dt><dd>{quote.title}</dd></div><div><dt>Merchant</dt><dd>{quote.merchant}</dd></div><div><dt>Currency</dt><dd>USD · Sandbox</dd></div><div><dt>Your budget</dt><dd>{money(quote.budgetCents)}</dd></div><div><dt>Hard spending cap</dt><dd>$80.00</dd></div><div><dt>Referral</dt><dd>{quote.referralCode||'No referral'}</dd></div>{quote.referralCode?<div><dt>Creator commission</dt><dd>{money(commission(quote.amountCents,quote.commissionBps))} · included</dd></div>:null}</dl><div className="review-total"><span>Total</span><strong>{money(quote.amountCents)}</strong></div><p className="tiny muted">One item · no delivery or tax charges in this sandbox demo. Review expires in 15 minutes.</p>{!approved?<button className="primary wide" onClick={()=>setApproved(true)}><Check size={17}/> I approve this purchase</button>:<><p className="approval-note"><Check size={16}/> Review approved. Complete payment with PayPal.</p><PayPalButtons quoteId={quote.id} onComplete={onComplete}/></>}<p className="tiny muted secure-note"><ShieldCheck size={14}/> No real money moves. PayPal sandbox only.</p></aside>;
+"use client";
+import Link from "next/link";
+import { useState } from "react";
+import { ShieldCheck, X, Check, ExternalLink } from "lucide-react";
+import { money, commission } from "@/lib/money";
+import type { PublicQuote } from "@/lib/quotes";
+import type { Receipt } from "@/lib/orders";
+import { PayPalButtons } from "./PayPalButtons";
+export function ApprovalCard({
+  quote,
+  onClose,
+  onComplete,
+}: {
+  quote: PublicQuote;
+  onClose: () => void;
+  onComplete: (r: Receipt) => void;
+}) {
+  const [approved, setApproved] = useState(false);
+  return (
+    <aside className="review-panel" aria-label="Purchase review">
+      <div className="panel-header">
+        <span className="eyebrow">YOUR PURCHASE REVIEW</span>
+        <button
+          className="icon-button"
+          onClick={onClose}
+          aria-label="Close purchase review"
+        >
+          <X size={19} />
+        </button>
+      </div>
+      <div className="review-icon">
+        <ShieldCheck size={28} />
+      </div>
+      <h2>
+        A great find.
+        <br />
+        Your call.
+      </h2>
+      <p className="muted">
+        Take a moment to review. You always have the final say.
+      </p>
+      <dl className="review-list">
+        <div>
+          <dt>Item</dt>
+          <dd>{quote.title}</dd>
+        </div>
+        <div>
+          <dt>Merchant</dt>
+          <dd>{quote.merchant}</dd>
+        </div>
+        <div>
+          <dt>Currency</dt>
+          <dd>USD · Sandbox</dd>
+        </div>
+        <div>
+          <dt>Your budget</dt>
+          <dd>{money(quote.budgetCents)}</dd>
+        </div>
+        <div>
+          <dt>Hard spending cap</dt>
+          <dd>$80.00</dd>
+        </div>
+        <div>
+          <dt>Referral</dt>
+          <dd>{quote.referralCode || "No referral"}</dd>
+        </div>
+        {quote.referralCode ? (
+          <div>
+            <dt>Creator commission</dt>
+            <dd>
+              {money(commission(quote.amountCents, quote.commissionBps))} ·
+              included
+            </dd>
+          </div>
+        ) : null}
+      </dl>
+      <div className="review-total">
+        <span>Total</span>
+        <strong>{money(quote.amountCents)}</strong>
+      </div>
+      <p className="tiny muted">
+        One item · no delivery or tax charges in this sandbox demo. Review
+        expires in 15 minutes.
+      </p>
+      {!approved ? (
+        <button className="primary wide" onClick={() => setApproved(true)}>
+          <Check size={17} /> I approve this purchase
+        </button>
+      ) : (
+        <>
+          <p className="approval-note">
+            <Check size={16} /> Review approved. Complete payment with PayPal.
+          </p>
+          <PayPalButtons quoteId={quote.id} onComplete={onComplete} />
+        </>
+      )}
+      <p className="tiny muted secure-note">
+        <ShieldCheck size={14} /> No real money moves. PayPal sandbox only.
+      </p>
+    </aside>
+  );
 }
-export function ReceiptCard({receipt,onClose,onCheck}:{receipt:Receipt;onClose:()=>void;onCheck:()=>void}) {
- const done=receipt.status==='COMPLETED';
- return <aside className="review-panel" aria-label="Payment receipt"><div className="panel-header"><span className="eyebrow">{done?'PURCHASE COMPLETE':'PAYMENT STATUS'}</span><button className="icon-button" onClick={onClose} aria-label="Close receipt"><X size={19}/></button></div><div className="review-icon"><Check size={28}/></div><h2>{done?'Good choice.':'Checking in.'}</h2><p>{done?'Your sandbox payment is confirmed.':'Your payment has not been confirmed yet. Check its status before retrying.'}</p><h3>{receipt.quote.title}</h3><div className="review-total"><span>Total</span><strong>{money(receipt.quote.amountCents)}</strong></div><dl className="receipt-ids"><dt>Status</dt><dd>{receipt.status}</dd><dt>PayPal order</dt><dd>{receipt.paypalOrderId||'Not created'}</dd><dt>Capture</dt><dd>{receipt.captureId||'Awaiting confirmation'}</dd>{receipt.quote.referralCode?<><dt>Referral commission owed</dt><dd>{receipt.quote.referralCode} · {money(receipt.commissionCents)}</dd></>:null}</dl>{!done?<button className="primary wide" onClick={onCheck}>Check payment status</button>:<Link className="primary wide" href="/dashboard">View merchant dashboard <ExternalLink size={16}/></Link>}</aside>;
+export function ReceiptCard({
+  receipt,
+  onClose,
+  onCheck,
+}: {
+  receipt: Receipt;
+  onClose: () => void;
+  onCheck: () => void;
+}) {
+  const done = receipt.status === "COMPLETED";
+  return (
+    <aside className="review-panel" aria-label="Payment receipt">
+      <div className="panel-header">
+        <span className="eyebrow">
+          {done ? "PURCHASE COMPLETE" : "PAYMENT STATUS"}
+        </span>
+        <button
+          className="icon-button"
+          onClick={onClose}
+          aria-label="Close receipt"
+        >
+          <X size={19} />
+        </button>
+      </div>
+      <div className="review-icon">
+        <Check size={28} />
+      </div>
+      <h2>{done ? "Good choice." : "Checking in."}</h2>
+      <p>
+        {done
+          ? "Your sandbox payment is confirmed."
+          : "Your payment has not been confirmed yet. Check its status before retrying."}
+      </p>
+      <h3>{receipt.quote.title}</h3>
+      <div className="review-total">
+        <span>Total</span>
+        <strong>{money(receipt.quote.amountCents)}</strong>
+      </div>
+      <dl className="receipt-ids">
+        <dt>Status</dt>
+        <dd>{receipt.status}</dd>
+        <dt>PayPal order</dt>
+        <dd>{receipt.paypalOrderId || "Not created"}</dd>
+        <dt>Capture</dt>
+        <dd>{receipt.captureId || "Awaiting confirmation"}</dd>
+        {receipt.quote.referralCode ? (
+          <>
+            <dt>Referral commission owed</dt>
+            <dd>
+              {receipt.quote.referralCode} · {money(receipt.commissionCents)}
+            </dd>
+          </>
+        ) : null}
+      </dl>
+      {!done ? (
+        <button className="primary wide" onClick={onCheck}>
+          Check payment status
+        </button>
+      ) : (
+        <Link className="primary wide" href="/dashboard">
+          View merchant dashboard <ExternalLink size={16} />
+        </Link>
+      )}
+    </aside>
+  );
 }
