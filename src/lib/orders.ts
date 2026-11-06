@@ -30,13 +30,21 @@ export async function approveAndCreate(quoteId:string,sessionId:string) {
  try {
   const created=await createPayPalOrder(q,o.id);
   if(!created.id) throw new AppError(502,'PayPal did not return an order identifier.');
-  await database().execute({sql:"UPDATE orders SET paypal_order_id=?,status='CREATED' WHERE id=?",args:[created.id,o.id]});
+  const details=await getPayPalOrder(created.id);
+  verifyAmount(details,q.amount_cents);
+  const merchantId=details.purchase_units[0].payee?.merchant_id;
+  if(!merchantId) throw new AppError(502,'PayPal did not identify the receiving merchant.');
+  await database().execute({sql:"UPDATE orders SET paypal_order_id=?,paypal_merchant_id=?,status='CREATED' WHERE id=?",args:[created.id,merchantId,o.id]});
   o=await ownedOrder(o.id,sessionId);
   return {orderId:o.id,paypalOrderId:o.paypal_order_id};
  } finally {await release(o.id);}
 }
+function verifyMerchant(o:Order,p:PayPalOrder) {
+ if(!o.paypal_merchant_id||p.purchase_units[0].payee?.merchant_id!==o.paypal_merchant_id) throw new AppError(409,'PayPal receiving merchant does not match this order.');
+}
 async function recordCompleted(o:Order,q:Quote,p:PayPalOrder) {
  verifyAmount(p,q.amount_cents);
+ verifyMerchant(o,p);
  const captures=p.purchase_units[0].payments?.captures;
  if(p.status!=='COMPLETED'||captures?.length!==1||captures[0].status!=='COMPLETED') return false;
  const c=captures[0];
@@ -55,11 +63,13 @@ export async function captureOrder(id:string,sessionId:string) {
  try {
   const remote=await getPayPalOrder(o.paypal_order_id);
   verifyAmount(remote,q.amount_cents);
+  verifyMerchant(o,remote);
   if(await recordCompleted(o,q,remote)) return receipt(await ownedOrder(id,sessionId),q);
   await validateQuote(q);
   if(remote.status!=='APPROVED') throw new AppError(409,'Approve this payment in PayPal before capturing.');
   await database().execute({sql:"UPDATE orders SET status='CAPTURING' WHERE id=?",args:[id]});
-  const captured=await capturePayPalOrder(o.paypal_order_id,o.id);
+  await capturePayPalOrder(o.paypal_order_id,o.id);
+  const captured=await getPayPalOrder(o.paypal_order_id);
   if(!(await recordCompleted(o,q,captured))) {
    await database().execute({sql:"UPDATE orders SET status='PENDING' WHERE id=?",args:[id]});
   }

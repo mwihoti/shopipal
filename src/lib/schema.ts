@@ -11,6 +11,6 @@ export type Quote = {
  expires_at:number; approved_at:number|null;
 };
 export type Order = {
- id:string; quote_id:string; session_id:string; paypal_order_id:string|null; paypal_capture_id:string|null;
+ id:string; quote_id:string; session_id:string; paypal_order_id:string|null; paypal_capture_id:string|null; paypal_merchant_id:string|null;
  status:string; created_at:number; captured_at:number|null; commission_cents:number; lease_until:number;
 };
