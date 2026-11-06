@@ -1,1 +1,2 @@
-export default function Home() { return <main><h1>Shopipal</h1><p>A little help. A great find.</p></main>; }
+import { Storefront } from '@/components/Storefront';
+export default function Home(){return <Storefront/>;}
