@@ -9,6 +9,7 @@ import type { Receipt } from '@/lib/orders';
 import { money } from '@/lib/money';
 import { request } from '@/lib/client';
 import { ProductCard } from './ProductCard';
+import { PurchaseDialog } from './PurchaseDialog';
 import { ApprovalCard,ReceiptCard } from './ApprovalCard';
 export function Storefront() {
  const [products,setProducts]=useState<Product[]>([]),[category,setCategory]=useState('All finds'),[input,setInput]=useState(''),[budget,setBudget]=useState(80),[ref,setRef]=useState(''),[notice,setNotice]=useState(''),[error,setError]=useState(''),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[quote,setQuote]=useState<PublicQuote|null>(null),[receipt,setReceipt]=useState<Receipt|null>(null),[pending,setPending]=useState('');
@@ -23,6 +24,7 @@ export function Storefront() {
   setPending(localStorage.getItem('shopipal.pending')||'');
   return()=>{active=false;};
  },[]);
+ const closePanel=useCallback(()=>{setQuote(null);setReceipt(null);},[]);
  const onComplete=useCallback((r:Receipt)=>{setReceipt(r);setQuote(null);if(r.status==='COMPLETED'){localStorage.removeItem('shopipal.pending');setPending('');}else setPending(r.id);},[]);
  async function select(product:Product){
   setBusy(true);setError('');
@@ -57,6 +59,6 @@ export function Storefront() {
  {loading?<p className="empty-state">Gathering the good finds…</p>:visible.length?<div className="product-grid">{visible.map(p=><ProductCard key={p.id} product={p} onSelect={p=>void select(p)}/>)}</div>:<p className="empty-state">The collection isn’t available yet. Run the database setup and refresh.</p>}<p className="collection-note">A curated demo collection. Product illustrations represent sample items.</p></section>
  <section className="how-section" id="how-it-works"><div><span className="eyebrow">A LITTLE LESS FRICTION</span><h2>Good shopping.<br/>On your terms.</h2></div><div className="how-step"><MessageCircle size={24}/><span>01 / TELL US</span><h3>Start with a thought.</h3><p>A need, a budget, a favorite color. Your pal does the searching.</p></div><div className="how-step"><Compass size={24}/><span>02 / FIND YOUR FIT</span><h3>Consider the good ones.</h3><p>A few thoughtful matches. Clear prices. No endless scrolling.</p></div><div className="how-step"><ShieldCheck size={24}/><span>03 / MAKE IT YOURS</span><h3>You have the final say.</h3><p>Review every detail. Approve your choice. Pay with PayPal sandbox.</p></div></section>
  </main><footer className="site-footer"><a className="brand" href="/">shopipal.</a><p>A little help goes a long way.</p><span>Built for the PayPal AI Hackathon · Sandbox only</span></footer>
- {quote||receipt?<div className="review-overlay"><button className="review-backdrop" aria-label="Close purchase panel" onClick={()=>{setQuote(null);setReceipt(null);}}/>{quote?<ApprovalCard key={quote.id} quote={quote} onClose={()=>setQuote(null)} onComplete={onComplete}/>:receipt?<ReceiptCard receipt={receipt} onClose={()=>setReceipt(null)} onCheck={()=>void checkPayment()}/>:null}</div>:null}
+ {quote||receipt?<PurchaseDialog onClose={closePanel}>{quote?<ApprovalCard key={quote.id} quote={quote} onClose={()=>setQuote(null)} onComplete={onComplete}/>:receipt?<ReceiptCard receipt={receipt} onClose={()=>setReceipt(null)} onCheck={()=>void checkPayment()}/>:null}</PurchaseDialog>:null}
  </>;
 }
