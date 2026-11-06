@@ -35,7 +35,7 @@ The scripts load `.env.local`; already-exported environment variables take prece
 5. Verify `/api/health`, catalog/referral loading, a real personal sandbox buyer payment, and the protected dashboard.
 6. Redeploy and confirm completed orders remain visible. If necessary, roll back the app deployment; keep database migrations additive and retain remote payment records.
 
-The default install/build commands are `npm ci` and `npm run build`. GitHub Actions runs type checking, lint, domain tests, production build, and Chromium browser tests before release. It does not install cloud credentials or deploy automatically.
+The default install/build commands are `npm ci` and `npm run build`. The CI template at `docs/checks.workflow.yml` runs type checking, lint, domain tests, production build, and Chromium browser tests. To activate it, copy it to `.github/workflows/checks.yml` using a GitHub credential with workflow permission. The connected Git credential used for the initial push did not have that permission. The template does not install cloud credentials or deploy automatically.
 
 ## Until credentials are available
 
