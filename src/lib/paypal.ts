@@ -10,7 +10,7 @@ async function token() {
  return (await response.json()).access_token as string;
 }
 async function call(path:string, method='GET', payload?:unknown, key?:string):Promise<PayPalOrder> {
- const response=await fetch(`${base}${path}`,{method,headers:{Authorization:`Bearer ${await token()}`,'Content-Type':'application/json',...(key?{'PayPal-Request-Id':key}:{})},body:payload?JSON.stringify(payload):undefined,cache:'no-store',signal:AbortSignal.timeout(20000)});
+ const response=await fetch(`${base}${path}`,{method,headers:{Authorization:`Bearer ${await token()}`,'Content-Type':'application/json',Prefer:'return=representation',...(key?{'PayPal-Request-Id':key}:{})},body:payload?JSON.stringify(payload):undefined,cache:'no-store',signal:AbortSignal.timeout(20000)});
  const data=await response.json();
  if(!response.ok){
   const issue=data.details?.[0]?.issue;
