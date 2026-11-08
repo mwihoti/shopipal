@@ -62,7 +62,8 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
       .then((r) => {
         if (active) {
           setProducts(r.products);
-          setPending(localStorage.getItem("shopipal.pending") || "");
+          if (!previewMode)
+            setPending(localStorage.getItem("shopipal.pending") || "");
         }
       })
       .catch((e) => {
@@ -72,7 +73,7 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
         if (active) setLoading(false);
       });
     const code = new URLSearchParams(window.location.search).get("ref");
-    if (code)
+    if (code && !previewMode)
       request<{ referral: { code: string; name: string } | null }>(
         `/api/referral?code=${encodeURIComponent(code)}`,
       )
@@ -98,7 +99,7 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [previewMode]);
   const closePanel = useCallback(() => {
     setQuote(null);
     setReceipt(null);
@@ -112,6 +113,7 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
     } else setPending(r.id);
   }, []);
   async function select(product: Product) {
+    if (previewMode) return;
     setBusy(true);
     setError("");
     try {
@@ -132,6 +134,7 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
     }
   }
   async function checkPayment() {
+    if (previewMode) return;
     const id =
       receipt?.id || pending || localStorage.getItem("shopipal.pending");
     if (!id) return;
@@ -146,7 +149,7 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
     }
   }
   function ask(text: string) {
-    if (chatting || !text.trim()) return;
+    if (previewMode || chatting || !text.trim()) return;
     clearError();
     setInput("");
     void sendMessage({ text: text.trim() });
@@ -179,7 +182,7 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
       </header>
       <main className="store-main">
         {previewMode ? (
-          <p className="notice">
+          <p className="notice" id="preview-notice">
             Preview mode · Explore the collection. Checkout and chat open once
             merchant setup is complete.
           </p>
@@ -241,7 +244,11 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
                       "An everyday bag under $50",
                       "Something for my next run",
                     ].map((s) => (
-                      <button key={s} onClick={() => ask(s)}>
+                      <button
+                        key={s}
+                        disabled={previewMode}
+                        onClick={() => ask(s)}
+                      >
                         {s}
                         <ArrowUpRight size={14} />
                       </button>
@@ -336,13 +343,19 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
               </label>
               <input
                 id="shopping-message"
+                disabled={previewMode}
+                aria-describedby={previewMode ? "preview-notice" : undefined}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 maxLength={2000}
-                placeholder="Tell me what you have in mind…"
+                placeholder={
+                  previewMode
+                    ? "Chat opens after store setup"
+                    : "Tell me what you have in mind…"
+                }
               />
               <button
-                disabled={chatting || !input.trim()}
+                disabled={previewMode || chatting || !input.trim()}
                 aria-label="Send message"
               >
                 <ArrowUp size={20} />
@@ -445,6 +458,7 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
                 <ProductCard
                   key={p.id}
                   product={p}
+                  disabled={previewMode}
                   onSelect={(p) => void select(p)}
                 />
               ))}

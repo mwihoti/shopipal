@@ -67,6 +67,8 @@ test("mobile collection fits the viewport", async ({ page }) => {
 test("sandbox approval callback renders the mocked receipt and order dashboard", async ({
   page,
 }) => {
+  test.setTimeout(60000);
+  await page.request.get("/dashboard");
   await page.route("https://www.paypal.com/sdk/js?**", (route) =>
     route.fulfill({
       contentType: "application/javascript",
@@ -132,7 +134,12 @@ test("sandbox approval callback renders the mocked receipt and order dashboard",
       },
     }),
   );
-  await page.getByRole("link", { name: "View merchant dashboard" }).click();
+  await Promise.all([
+    page.waitForResponse((response) =>
+      response.url().endsWith("/api/dashboard"),
+    ),
+    page.getByRole("link", { name: "View merchant dashboard" }).click(),
+  ]);
   await expect(
     page.getByText("Captured volume", { exact: true }),
   ).toBeVisible();

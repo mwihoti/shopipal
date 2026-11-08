@@ -2,6 +2,7 @@ import fallback from "../../data/catalog.json";
 import { eq } from "drizzle-orm";
 import { orm } from "./db";
 import { products } from "./schema";
+import { catalogPreviewMode } from "./database-config";
 export async function getProduct(id: string) {
   return (
     await orm().select().from(products).where(eq(products.id, id)).limit(1)
@@ -11,10 +12,9 @@ export async function searchProducts(
   query = "",
   maxCents = Number.MAX_SAFE_INTEGER,
 ) {
-  const all =
-    process.env.VERCEL && !process.env.DATABASE_URL
-      ? fallback
-      : await orm().select().from(products).where(eq(products.available, true));
+  const all = catalogPreviewMode()
+    ? fallback
+    : await orm().select().from(products).where(eq(products.available, true));
   const words = query
     .toLowerCase()
     .split(/\W+/)

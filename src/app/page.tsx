@@ -1,8 +1,5 @@
 import { Storefront } from "@/components/Storefront";
+import { catalogPreviewMode } from "@/lib/database-config";
 export default function Home() {
-  return (
-    <Storefront
-      previewMode={!!process.env.VERCEL && !process.env.DATABASE_URL}
-    />
-  );
+  return <Storefront previewMode={catalogPreviewMode()} />;
 }

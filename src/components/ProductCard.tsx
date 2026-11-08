@@ -6,14 +6,17 @@ export function ProductCard({
   product,
   onSelect,
   compact = false,
+  disabled = false,
 }: {
   product: Product;
   onSelect: (p: Product) => void;
   compact?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <article className={`product-card ${compact ? "compact" : ""}`}>
       <button
+        disabled={disabled}
         className="product-image"
         onClick={() => onSelect(product)}
         aria-label={`Review ${product.title}`}
@@ -37,8 +40,13 @@ export function ProductCard({
           <strong>{money(product.priceCents)}</strong>
         </div>
         <p>{product.description}</p>
-        <button className="text-button" onClick={() => onSelect(product)}>
-          Review item <Plus size={14} />
+        <button
+          className="text-button"
+          disabled={disabled}
+          onClick={() => onSelect(product)}
+        >
+          {disabled ? "Checkout unavailable in preview" : "Review item"}{" "}
+          <Plus size={14} />
         </button>
       </div>
     </article>

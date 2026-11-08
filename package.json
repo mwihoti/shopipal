@@ -14,7 +14,8 @@
     "test": "vitest run",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:preview": "playwright test -c playwright.preview.config.ts"
   },
   "dependencies": {
     "@ai-sdk/react": "^4.0.167",

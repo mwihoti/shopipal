@@ -35,10 +35,28 @@ The scripts load `.env.local`; already-exported environment variables take prece
 5. Verify `/api/health`, catalog/referral loading, a real personal sandbox buyer payment, and the protected dashboard.
 6. Redeploy and confirm completed orders remain visible. If necessary, roll back the app deployment; keep database migrations additive and retain remote payment records.
 
-The default install/build commands are `npm ci` and `npm run build`. The CI template at `docs/checks.workflow.yml` runs type checking, lint, domain tests, production build, and Chromium browser tests. To activate it, copy it to `.github/workflows/checks.yml` using a GitHub credential with workflow permission. The connected Git credential used for the initial push did not have that permission. The template does not install cloud credentials or deploy automatically.
+The default install/build commands are `npm ci` and `npm run build`. Run `npm run test:preview` to verify browsing and disabled transaction controls without a remote database. The CI template at `docs/checks.workflow.yml` runs type checking, lint, domain tests, production build, and Chromium browser tests. To activate it, copy it to `.github/workflows/checks.yml` using a GitHub credential with workflow permission. The connected Git credential used for the initial push did not have that permission. The template does not install cloud credentials or deploy automatically.
 
 ## Until credentials are available
 
-A deployment without `DATABASE_URL` displays a labeled read-only catalog preview. Chat, purchase creation, and merchant reporting require their actual services; there is no fake checkout success fallback. This state is useful for design review but is **not** the completed hackathon payment demo.
+A deployment without a usable remote database URL displays a labeled read-only catalog preview. Chat, purchase creation, and merchant reporting require their actual services; there is no fake checkout success fallback. This state is useful for design review but is **not** the completed hackathon payment demo.
 
 The health endpoint verifies presence and database access, not credential validity at external providers. Always perform a real sandbox transaction before calling the hosted payment flow verified.
+
+## Fix “Deployment requires a remote libSQL database”
+
+This means the deployed app has no remote database URL, or has the local development value `file:./data/shopipal.db`. The local `.env.local` file is ignored by Git and does not configure Vercel.
+
+1. In the Vercel **shopipal** project, open **Settings → Environment Variables**.
+2. Set `DATABASE_URL` to your database's `libsql://...` endpoint and `DATABASE_AUTH_TOKEN` to its token. Choose Production, and Preview if you also deploy preview branches. `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` are supported aliases. Secure `https://` and `wss://` libSQL endpoints are also supported.
+3. Put those same two values in your local ignored `.env.local` temporarily. From the repository root, initialize the remote database:
+
+   ```sh
+   npm run db:migrate
+   npm run db:seed
+   ```
+
+4. Redeploy in Vercel so the new environment variables take effect. Restore your local database values afterward if desired.
+5. Configure the remaining application variables above before testing chat or payment. Check `/api/health`; `ready` means the configuration checks and database query passed.
+
+Without a remote database URL, the hosted collection stays in preview and disables chat and purchase controls. Category filters still work. A configured remote endpoint that cannot connect reports an error; the app does not replace failed database reads with preview data.
