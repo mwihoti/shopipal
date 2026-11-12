@@ -16,7 +16,7 @@ The Shopify store is separate from the PayPal sandbox demo. Its checkout may cha
 ## What works
 
 - Conversational discovery through OpenRouter and the Vercel AI SDK, with server-side catalog tools and a five-step execution limit.
-- Twelve illustrated demo products, category filters, and a shopper-controlled USD budget.
+- Twelve illustrated demo products, category filters, and a shopper-controlled USD budget. Explicit price limits such as “under 5 dollars” or “less than $5” also constrain chat results and review quotes; follow-up messages keep the last stated limit until it is changed. USD and KES limits stay separate.
 - Server-priced quotes, explicit purchase approval, and PayPal Orders v2 checkout.
 - Session ownership, quote expiry, merchant and amount verification, idempotent requests, and interrupted-capture recovery.
 - `?ref=alice` (15%) and `?ref=bob` (10%) attribution, recorded only after a completed sandbox capture.
@@ -156,7 +156,7 @@ npm run test:e2e
 npm run test:preview
 ```
 
-The latest implementation passed **41 unit/API tests and 7 browser tests**, plus lint, type checking, and the production build. The separate preview suite checks browsing with unavailable sandbox transaction controls.
+The checks cover chat price limits and repeated result cards, in addition to catalog discovery, purchase reviews, and checkout. Run the commands above to verify the current revision. The separate preview suite checks browsing with unavailable sandbox transaction controls.
 
 Browser tests use an isolated SQLite file and port 3107. PayPal browser tests intercept SDK/payment responses; server tests exercise payment state transitions with a mocked PayPal transport. Shopify tests cover currency separation, changed prices, unavailable variants, cart contents, checkout hosts, and explicit approval before handoff. These checks do not replace a completed sandbox payment or a real Shopify purchase.
 

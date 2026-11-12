@@ -19,6 +19,7 @@ import {
 import type { Product } from "@/lib/schema";
 import type { PublicQuote } from "@/lib/quotes";
 import type { Receipt } from "@/lib/orders";
+import { chatLimits } from "@/lib/chat-budget";
 import { money } from "@/lib/money";
 import { request } from "@/lib/client";
 import { BookStore, StoreBookReview } from "./BookStore";
@@ -267,108 +268,144 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
                   </div>
                 </>
               ) : (
-                messages.map((m) => (
-                  <div key={m.id} className={`chat-message ${m.role}`}>
-                    <span className="eyebrow">
-                      {m.role === "user" ? "YOU" : "YOUR PAL"}
-                    </span>
-                    {m.parts.map((part, i) => {
-                      if (part.type === "text")
-                        return <p key={i}>{part.text}</p>;
-                      if (
-                        part.type === "tool-search_store_books" &&
-                        "output" in part &&
-                        part.state === "output-available"
-                      ) {
-                        const output = part.output as {
-                          products?: StoreBook[];
-                        };
-                        return (
-                          <div className="chat-matches" key={i}>
-                            {output.products?.map((b) => (
-                              <button
-                                key={b.variantId}
-                                onClick={() => reviewBook(b)}
-                              >
-                                <span>
-                                  {b.title}
-                                  <small>Shopify store · KES</small>
-                                </span>
-                                <strong>
-                                  {storeMoney(b)} <ArrowUpRight size={14} />
-                                </strong>
-                              </button>
-                            ))}
-                          </div>
-                        );
-                      }
-                      if (
-                        part.type === "tool-prepare_store_checkout" &&
-                        "output" in part &&
-                        part.state === "output-available"
-                      ) {
-                        const b = part.output as StoreBook;
-                        return (
-                          <button
-                            key={i}
-                            className="primary"
-                            onClick={() => reviewBook(b)}
-                          >
-                            Review book: {b.title} <ArrowUpRight size={14} />
-                          </button>
-                        );
-                      }
-                      if (
-                        part.type === "tool-search_products" &&
-                        "output" in part &&
-                        part.state === "output-available"
-                      ) {
-                        const output = part.output as { products?: Product[] };
-                        return (
-                          <div className="chat-matches" key={i}>
-                            {output.products?.map((p) => (
-                              <button
-                                key={p.id}
-                                disabled={busy}
-                                onClick={() => void select(p)}
-                              >
-                                <span>
-                                  {p.title}
-                                  <small>{p.color}</small>
-                                </span>
-                                <strong>
-                                  {money(p.priceCents)}{" "}
-                                  <ArrowUpRight size={14} />
-                                </strong>
-                              </button>
-                            ))}
-                          </div>
-                        );
-                      }
-                      if (
-                        part.type === "tool-prepare_checkout" &&
-                        "output" in part &&
-                        part.state === "output-available"
-                      ) {
-                        const q = part.output as PublicQuote;
-                        return (
-                          <button
-                            key={i}
-                            className="primary"
-                            onClick={() => {
-                              setQuote(q);
-                              setReceipt(null);
-                            }}
-                          >
-                            Review {q.title}
-                            <ArrowUpRight size={14} />
-                          </button>
-                        );
-                      }
-                      return null;
-                    })}
-                  </div>
-                ))
+                messages.map((m, messageIndex) => {
+                  const limits = chatLimits(
+                    messages.slice(0, messageIndex + 1),
+                    Math.round(budget * 100),
+                  );
+                  const seen = new Set<string>();
+                  function firstMatch(id: string, withinBudget: boolean) {
+                    if (!withinBudget || seen.has(id)) return false;
+                    seen.add(id);
+                    return true;
+                  }
+                  return (
+                    <div key={m.id} className={`chat-message ${m.role}`}>
+                      <span className="eyebrow">
+                        {m.role === "user" ? "YOU" : "YOUR PAL"}
+                      </span>
+                      {m.parts.map((part, i) => {
+                        if (part.type === "text")
+                          return <p key={i}>{part.text}</p>;
+                        if (
+                          part.type === "tool-search_store_books" &&
+                          "output" in part &&
+                          part.state === "output-available"
+                        ) {
+                          const output = part.output as {
+                            products?: StoreBook[];
+                          };
+                          return (
+                            <div className="chat-matches" key={i}>
+                              {output.products
+                                ?.filter((b) =>
+                                  firstMatch(
+                                    b.variantId,
+                                    limits.kesCents === undefined ||
+                                      Math.round(Number(b.amount) * 100) <=
+                                        limits.kesCents,
+                                  ),
+                                )
+                                .map((b) => (
+                                  <button
+                                    key={b.variantId}
+                                    onClick={() => reviewBook(b)}
+                                  >
+                                    <span>
+                                      {b.title}
+                                      <small>Shopify store · KES</small>
+                                    </span>
+                                    <strong>
+                                      {storeMoney(b)} <ArrowUpRight size={14} />
+                                    </strong>
+                                  </button>
+                                ))}
+                            </div>
+                          );
+                        }
+                        if (
+                          part.type === "tool-prepare_store_checkout" &&
+                          "output" in part &&
+                          part.state === "output-available"
+                        ) {
+                          const b = part.output as StoreBook;
+                          if (
+                            limits.kesCents !== undefined &&
+                            Math.round(Number(b.amount) * 100) > limits.kesCents
+                          )
+                            return null;
+                          return (
+                            <button
+                              key={i}
+                              className="primary"
+                              onClick={() => reviewBook(b)}
+                            >
+                              Review book: {b.title} <ArrowUpRight size={14} />
+                            </button>
+                          );
+                        }
+                        if (
+                          part.type === "tool-search_products" &&
+                          "output" in part &&
+                          part.state === "output-available"
+                        ) {
+                          const output = part.output as {
+                            products?: Product[];
+                          };
+                          return (
+                            <div className="chat-matches" key={i}>
+                              {output.products
+                                ?.filter((p) =>
+                                  firstMatch(
+                                    p.id,
+                                    p.priceCents <= limits.usdCents,
+                                  ),
+                                )
+                                .map((p) => (
+                                  <button
+                                    key={p.id}
+                                    disabled={busy}
+                                    onClick={() => void select(p)}
+                                  >
+                                    <span>
+                                      {p.title}
+                                      <small>{p.color}</small>
+                                    </span>
+                                    <strong>
+                                      {money(p.priceCents)}{" "}
+                                      <ArrowUpRight size={14} />
+                                    </strong>
+                                  </button>
+                                ))}
+                            </div>
+                          );
+                        }
+                        if (
+                          part.type === "tool-prepare_checkout" &&
+                          "output" in part &&
+                          part.state === "output-available"
+                        ) {
+                          const q = part.output as PublicQuote;
+                          if (q.amountCents > limits.usdCents) return null;
+                          return (
+                            <button
+                              key={i}
+                              className="primary"
+                              onClick={() => {
+                                setQuote(q);
+                                setReceipt(null);
+                              }}
+                            >
+                              Review {q.title}
+                              <ArrowUpRight size={14} />
+                            </button>
+                          );
+                        }
+                        return null;
+                      })}
+                    </div>
+                  );
+                })
               )}
               {chatting ? (
                 <p className="thinking">
