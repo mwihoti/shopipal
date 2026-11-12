@@ -130,6 +130,8 @@ Ask **“Search retailers for reading books under $10”**, or use that chat sug
 
 The cards open the retailer in a new tab. Final prices, shipping destinations, taxes, currency fees and fulfillment are controlled there. Item budgets exclude those additional charges. Channel3 products cannot be sent through the demo merchant's PayPal checkout and do not become inventory or orders in Shopipal. If the key is absent or the API fails, the app reports unavailable search without inventing listings. See the [official API reference](https://github.com/channel3-ai/skills/blob/main/skills/channel3-api/references/api-reference.md).
 
+A production chat search for reading books under $10 was checked on 12 November 2026: it returned three Channel3 offers within budget, and all three product images loaded. Prices and retailer availability can change.
+
 ### Merchant studio
 
 Set a merchant passphrase and generate a signing secret locally:

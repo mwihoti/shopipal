@@ -126,6 +126,17 @@ a {
   gap: 7%;
   padding: 69px 0 62px;
   align-items: center;
+  position: relative;
+  isolation: isolate;
+}
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: #f2e7dc;
+  box-shadow: 0 0 0 100vmax #f2e7dc;
+  clip-path: inset(0 -100vmax);
 }
 .pill {
   display: inline-flex;
@@ -181,7 +192,7 @@ a {
 }
 .chat-panel {
   border: 1px solid #d9dfce;
-  background: #fffefa;
+  background: #fffaf4;
   border-radius: 12px;
   box-shadow: 0 14px 45px #293e1b07;
   overflow: hidden;
@@ -191,7 +202,8 @@ a {
   display: flex;
   align-items: center;
   gap: 11px;
-  border-bottom: 1px solid #e7e8df;
+  border-bottom: 1px solid #e5d9ca;
+  background: #e8dac9;
   padding: 18px 20px;
 }
 .assistant-mark {
@@ -212,7 +224,7 @@ a {
   align-items: center;
   gap: 5px;
   font-size: 9px;
-  color: #8b8e82;
+  color: #5f6857;
   margin-top: 5px;
 }
 .chat-label {
@@ -241,7 +253,7 @@ a {
 .chat-content > p {
   font-size: 12px;
   line-height: 1.9;
-  color: #828778;
+  color: #67705e;
 }
 .suggestions {
   display: flex;

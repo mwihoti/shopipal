@@ -61,7 +61,7 @@ Before submitting, replace any missing test access in your Devpost entry with a 
 
 ## Final checklist
 
-- [ ] Channel3 production key is configured and a real search succeeds on the hosted app.
+- [x] Channel3 production key is configured and a real search succeeds on the hosted app.
 - [ ] A dedicated Personal sandbox buyer login works; judging instructions contain test access.
 - [ ] A public YouTube demo under three minutes is attached.
 - [ ] Demo and public source links work when signed out; MIT license is visible.
