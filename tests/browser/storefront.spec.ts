@@ -1,4 +1,9 @@
 import { test, expect } from "@playwright/test";
+test.beforeEach(async ({ page }) => {
+  await page.route("**/api/store/books", (route) =>
+    route.fulfill({ json: { products: [], hasMore: false } }),
+  );
+});
 test("catalog filters, referral attribution, review approval, and keyboard dismissal", async ({
   page,
 }) => {

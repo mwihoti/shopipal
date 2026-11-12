@@ -21,10 +21,13 @@ import type { PublicQuote } from "@/lib/quotes";
 import type { Receipt } from "@/lib/orders";
 import { money } from "@/lib/money";
 import { request } from "@/lib/client";
+import { BookStore, StoreBookReview } from "./BookStore";
+import { storeMoney, type StoreBook } from "@/lib/store-types";
 import { ProductCard } from "./ProductCard";
 import { PurchaseDialog } from "./PurchaseDialog";
 import { ApprovalCard, ReceiptCard } from "./ApprovalCard";
 export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
+  const [book, setBook] = useState<StoreBook | null>(null);
   const [products, setProducts] = useState<Product[]>([]),
     [category, setCategory] = useState("All finds"),
     [input, setInput] = useState(""),
@@ -103,6 +106,7 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
   const closePanel = useCallback(() => {
     setQuote(null);
     setReceipt(null);
+    setBook(null);
   }, []);
   const onComplete = useCallback((r: Receipt) => {
     setReceipt(r);
@@ -112,7 +116,13 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
       setPending("");
     } else setPending(r.id);
   }, []);
+  function reviewBook(selected: StoreBook) {
+    setQuote(null);
+    setReceipt(null);
+    setBook(selected);
+  }
   async function select(product: Product) {
+    setBook(null);
     if (previewMode) return;
     setBusy(true);
     setError("");
@@ -174,6 +184,7 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
         </Link>
         <nav aria-label="Main navigation">
           <a href="#collection">The collection</a>
+          <a href="#book-store">Book store</a>
           <a href="#how-it-works">How it works</a>
           <Link className="merchant-link" href="/dashboard">
             Merchant studio <ArrowUpRight size={15} />
@@ -242,7 +253,7 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
                     {[
                       "Running shoes under $80",
                       "An everyday bag under $50",
-                      "Something for my next run",
+                      "Find a printable book from the book store",
                     ].map((s) => (
                       <button
                         key={s}
@@ -264,6 +275,49 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
                     {m.parts.map((part, i) => {
                       if (part.type === "text")
                         return <p key={i}>{part.text}</p>;
+                      if (
+                        part.type === "tool-search_store_books" &&
+                        "output" in part &&
+                        part.state === "output-available"
+                      ) {
+                        const output = part.output as {
+                          products?: StoreBook[];
+                        };
+                        return (
+                          <div className="chat-matches" key={i}>
+                            {output.products?.map((b) => (
+                              <button
+                                key={b.variantId}
+                                onClick={() => reviewBook(b)}
+                              >
+                                <span>
+                                  {b.title}
+                                  <small>Shopify store · KES</small>
+                                </span>
+                                <strong>
+                                  {storeMoney(b)} <ArrowUpRight size={14} />
+                                </strong>
+                              </button>
+                            ))}
+                          </div>
+                        );
+                      }
+                      if (
+                        part.type === "tool-prepare_store_checkout" &&
+                        "output" in part &&
+                        part.state === "output-available"
+                      ) {
+                        const b = part.output as StoreBook;
+                        return (
+                          <button
+                            key={i}
+                            className="primary"
+                            onClick={() => reviewBook(b)}
+                          >
+                            Review book: {b.title} <ArrowUpRight size={14} />
+                          </button>
+                        );
+                      }
                       if (
                         part.type === "tool-search_products" &&
                         "output" in part &&
@@ -406,6 +460,7 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
             </button>
           </div>
         ) : null}
+        <BookStore onReview={reviewBook} />
         <section id="collection" className="collection">
           <div className="section-heading">
             <div>
@@ -512,8 +567,17 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
           shopipal.
         </Link>
         <p>A little help goes a long way.</p>
-        <span>Built for the PayPal AI Hackathon · Sandbox only</span>
+        <span>PayPal demo · Sandbox only. Book store · Shopify checkout.</span>
       </footer>
+      {book ? (
+        <PurchaseDialog onClose={closePanel}>
+          <StoreBookReview
+            key={book.variantId}
+            book={book}
+            onClose={closePanel}
+          />
+        </PurchaseDialog>
+      ) : null}
       {quote || receipt ? (
         <PurchaseDialog onClose={closePanel}>
           {quote ? (

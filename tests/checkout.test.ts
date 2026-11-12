@@ -206,6 +206,8 @@ describe("trusted checkout", () => {
   });
   it("gives the model no payment authority", () => {
     expect(Object.keys(shoppingTools(sid, 8000))).toEqual([
+      "search_store_books",
+      "prepare_store_checkout",
       "search_products",
       "get_product",
       "prepare_checkout",

@@ -60,3 +60,13 @@ This means the deployed app has no remote database URL, or has the local develop
 5. Configure the remaining application variables above before testing chat or payment. Check `/api/health`; `ready` means the configuration checks and database query passed.
 
 Without a remote database URL, the hosted collection stays in preview and disables chat and purchase controls. Category filters still work. A configured remote endpoint that cannot connect reports an error; the app does not replace failed database reads with preview data.
+
+## Connected Shopify book store
+
+The book shelf and assistant connect to `pdf-color-games.myshopify.com` through the tokenless Storefront API, pinned to `2026-10`. No Admin API token is shipped to the browser or needed in Vercel. Products must be published to the Online Store and available for sale. The app fetches up to 30 products and 10 variants per product; the store link provides access to the full catalog.
+
+Book prices use KES. The demo's USD budget and referral commissions apply only to sandbox products; the assistant accepts a separate explicit KES budget for books. The book review requires approval before creating a one-item Shopify cart, rechecks price and availability, and verifies the returned variant and checkout host. Creating a cart is not a payment.
+
+Shopify controls the final total, payment methods, payment/test mode, order creation, and digital fulfillment. Review the store's payment settings before purchasing. Shopify purchases do not appear in the sandbox dashboard and do not accrue its demo referral commissions. Digital files must be attached and delivery configured in the Shopify store. The current catalog contains printable colouring/activity books; publish reading books there to make those discoverable as well.
+
+References: [Tokenless Storefront API](https://shopify.dev/docs/api/storefront/2026-10), [Cart creation and checkout](https://shopify.dev/docs/storefronts/headless/building-with-the-storefront-api/cart/manage).
