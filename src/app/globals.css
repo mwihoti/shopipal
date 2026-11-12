@@ -1149,7 +1149,7 @@ a {
   color: var(--ink);
 }
 .photo-credit {
-  display: inline-block;
+  display: block;
   margin: 0 0 12px;
   color: var(--muted);
   font-size: 11px;
