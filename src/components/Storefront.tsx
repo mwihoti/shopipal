@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { ClosingSection } from "./ClosingSection";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
@@ -8,10 +9,8 @@ import {
   ArrowUpRight,
   ArrowUp,
   Check,
-  Compass,
   Leaf,
   LoaderCircle,
-  MessageCircle,
   ShieldCheck,
   Sparkles,
   Tag,
@@ -582,53 +581,8 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
             Store books above use their actual Shopify listings.
           </p>
         </section>
-        <section className="how-section" id="how-it-works">
-          <div>
-            <span className="eyebrow">A LITTLE LESS FRICTION</span>
-            <h2>
-              Good shopping.
-              <br />
-              On your terms.
-            </h2>
-          </div>
-          <div className="how-step">
-            <MessageCircle size={24} />
-            <span>01 / TELL US</span>
-            <h3>Start with a thought.</h3>
-            <p>
-              A need, a budget, a favorite color. Your pal does the searching.
-            </p>
-          </div>
-          <div className="how-step">
-            <Compass size={24} />
-            <span>02 / FIND YOUR FIT</span>
-            <h3>Consider the good ones.</h3>
-            <p>A few thoughtful matches. Clear prices. No endless scrolling.</p>
-          </div>
-          <div className="how-step">
-            <ShieldCheck size={24} />
-            <span>03 / MAKE IT YOURS</span>
-            <h3>You have the final say.</h3>
-            <p>
-              Review every detail. Approve your choice. Pay with PayPal sandbox.
-            </p>
-          </div>
-        </section>
       </main>
-      <footer className="site-footer">
-        <Link className="brand" href="/">
-          shopipal.
-        </Link>
-        <p>A little help goes a long way.</p>
-        <span>PayPal demo · Sandbox only. Book store · Shopify checkout.</span>
-        <a
-          href="https://www.exchangerate-api.com"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Rates By Exchange Rate API
-        </a>
-      </footer>
+      <ClosingSection />
       {book ? (
         <PurchaseDialog onClose={closePanel}>
           <StoreBookReview
