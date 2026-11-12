@@ -4,18 +4,22 @@
 
 **[Try the live app](https://shopipal.vercel.app)** · **[Merchant studio](https://shopipal.vercel.app/dashboard)** · **[Connected book store](https://pdf-color-games.myshopify.com/)** · **[MIT license](LICENSE)**
 
-Built for the PayPal AI Hackathon. The app has two shopping flows:
+Built for the PayPal AI Hackathon. The app has three shopping flows:
 
-| Flow        | Catalog and currency                                | Checkout                                                                                             | Where orders appear                                                                                          |
-| ----------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| PayPal demo | 12 sample products in USD; maximum $80 per purchase | PayPal **sandbox**, using a personal sandbox buyer                                                   | Shopipal merchant studio, including referral commissions                                                     |
-| Book store  | Published books from pdf-color game, priced in KES  | Choose **Shopify checkout** for store payment/delivery, or **PayPal sandbox** for a USD test payment | Shopify orders stay in Shopify; PayPal sandbox book payments appear in Shopipal without download fulfillment |
+| Flow            | Catalog and currency                                     | Checkout                                                                                             | Where orders appear                                                                                          |
+| --------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| PayPal demo     | 12 sample products in USD; maximum $80 per purchase      | PayPal **sandbox**, using a personal sandbox buyer                                                   | Shopipal merchant studio, including referral commissions                                                     |
+| Book store      | Published books from pdf-color game, priced in KES       | Choose **Shopify checkout** for store payment/delivery, or **PayPal sandbox** for a USD test payment | Shopify orders stay in Shopify; PayPal sandbox book payments appear in Shopipal without download fulfillment |
+| Retailer search | Real external offers in USD, discovered through Channel3 | External retailer checkout                                                                           | Retailer orders stay with the retailer                                                                       |
 
 The Shopify store is separate from the PayPal sandbox demo. Its checkout may charge real money. Review the final total and payment method there before paying. Chat uses the USD budget ceiling and exchange-rate estimates to compare items across both catalogs. Shopify still controls the final payable total and payment settings; demo referral commissions do not apply to its purchases.
+
+**Submitting the project?** Follow the [Devpost submission guide](docs/submission.md), with a copy-ready description, judge testing steps and a short video outline. The official deadline is **12 November 2026 at 23:00 EAT (12:00 PST)**.
 
 ## What works
 
 - Conversational discovery through OpenRouter and the Vercel AI SDK, with server-side catalog tools and a five-step execution limit.
+- Channel3 retailer discovery through chat, with product images, in-stock USD offers, server-enforced price limits and retailer checkout links. Requires `CHANNEL3_API_KEY`; unavailable searches are reported honestly.
 - Twelve photo-backed demo products, category filters, and a shopper-controlled USD budget. Explicit price limits such as “under 5 dollars” or “less than $5” also constrain chat results and review quotes; follow-up messages keep the last stated limit until it is changed. KES book prices are converted to estimated USD when checking a dollar budget; an explicit KES limit is also respected.
 - Server-priced quotes, explicit purchase approval, and PayPal Orders v2 checkout.
 - Session ownership, quote expiry, merchant and amount verification, idempotent requests, and interrupted-capture recovery.
@@ -34,12 +38,7 @@ The hosted app is already configured. You do not need developer API keys to try 
 
 Use a dedicated **Personal / Buyer sandbox account**, separate from the Business / Merchant account associated with the app. This login belongs in the PayPal popup, not the merchant studio.
 
-| Login field            | Dedicated judging account                                             |
-| ---------------------- | --------------------------------------------------------------------- |
-| Sandbox buyer email    | **Pending: owner must provide the dedicated Personal sandbox email.** |
-| Sandbox buyer password | **Pending: owner must provide that account's sandbox password.**      |
-
-These entries are intentionally marked pending until the account owner supplies the actual test login. They are not working credentials. A PayPal app Client ID and Secret cannot be used as a buyer login.
+For judging, supply a working dedicated test buyer email and password in the submission's testing instructions. They do not have to be published in this README. A reviewer can also use their own Personal sandbox account. PayPal app Client IDs and Secrets are not buyer logins.
 
 To create or retrieve the buyer login:
 
@@ -54,7 +53,7 @@ To create or retrieve the buyer login:
 2. Ask **“Find socks under $20”**, or browse the sandbox collection below the book store. Choose **Cloud Crew — $16.00**.
 3. Review the item, merchant, USD price, spending cap, referral, and **$2.40** creator commission. The commission is included in the demo price; it is not an additional charge.
 4. Click **I approve this purchase**, then the **PayPal** button.
-5. In the PayPal sandbox popup, log in with the **Personal sandbox buyer email and password above**. Review the amount and complete the sandbox payment. Do not use your real PayPal account or the Business sandbox seller login.
+5. In the PayPal sandbox popup, log in with the **Personal sandbox buyer email and password supplied in the testing instructions**. Review the amount and complete the sandbox payment. Do not use your real PayPal account or the Business sandbox seller login.
 6. Confirm the receipt says the payment completed and displays the PayPal order and capture IDs.
 7. Open **[Merchant studio](https://shopipal.vercel.app/dashboard)** and sign in with the demo merchant passphrase provided in the submission's testing instructions. Verify the new **$16.00** completed order and **$2.40 commission owed** for Alice. Summary totals include earlier test purchases.
 8. If the connection drops after approval, use **Check payment status** before retrying. The server reconciles completed captures without charging again.
@@ -99,6 +98,7 @@ Set these in the ignored `.env.local` file for development, or in Vercel's envir
 | `NEXT_PUBLIC_PAYPAL_CLIENT_ID` | The same sandbox Client ID, used by the browser SDK                                  |
 | `PAYPAL_CLIENT_SECRET`         | Sandbox app secret; server only                                                      |
 | `PAYPAL_ENVIRONMENT`           | `SANDBOX`; the app rejects live mode                                                 |
+| `CHANNEL3_API_KEY`             | Server-only Channel3 key for external retailer search                                |
 | `OPENROUTER_API_KEY`           | Server-side OpenRouter API key                                                       |
 | `OPENROUTER_MODEL`             | Exact model ID supporting tool calling                                               |
 | `DASHBOARD_PASSPHRASE`         | Merchant studio sign-in passphrase                                                   |
@@ -120,7 +120,15 @@ Set these in the ignored `.env.local` file for development, or in Vercel's envir
 
 Create a key at [OpenRouter](https://openrouter.ai/settings/keys) and choose a [tool-capable model](https://openrouter.ai/models). The app uses `@openrouter/ai-sdk-provider`, `ai`, and `@ai-sdk/react`; it does not need a separate OpenAI key or Vercel AI Gateway.
 
-The model can call `search_products`, `get_product`, and `prepare_checkout` for the sandbox collection, and `search_store_books` and `prepare_store_checkout` for the book store. These tools search or prepare reviews. They do not approve, capture, refund, or pay creators. The shopper chooses the checkout in the book review. The Shopify cart is created only after approval in the UI; a PayPal sandbox book quote is prepared through a separate endpoint and requires its own approval.
+The model can call `search_products`, `get_product`, and `prepare_checkout` for the sandbox collection, and `search_store_books` and `prepare_store_checkout` for the book store. The additional `search_market_products` tool searches Channel3 retailer offers. These tools search or prepare reviews. They do not approve, capture, refund, or pay creators. The shopper chooses the checkout in the book review. The Shopify cart is created only after approval in the UI; a PayPal sandbox book quote is prepared through a separate endpoint and requires its own approval.
+
+### Channel3 retailer search
+
+Get a key from the [Channel3 developer dashboard](https://trychannel3.com/developers). Add `CHANNEL3_API_KEY` to your ignored `.env.local`, or to **Vercel → Shopipal → Settings → Environment Variables → Production**. Redeploy after adding or changing it. Do not prefix it with `NEXT_PUBLIC_` or commit it. For CLI setup, run `vercel env add CHANNEL3_API_KEY production --sensitive` and paste the value into its private prompt, then redeploy production.
+
+Ask **“Search retailers for reading books under $10”**, or use that chat suggestion. The model calls `search_market_products`; the server sends an authenticated `POST /v1/search` to Channel3 using the `x-api-key` header, a USD price filter and in-stock availability. It validates returned offers again, selecting at most three matching products with their own retailer links and images. Explicit KES budgets are converted using the same trusted USD/KES rate before searching. The model cannot increase a shopper's budget.
+
+The cards open the retailer in a new tab. Final prices, shipping destinations, taxes, currency fees and fulfillment are controlled there. Item budgets exclude those additional charges. Channel3 products cannot be sent through the demo merchant's PayPal checkout and do not become inventory or orders in Shopipal. If the key is absent or the API fails, the app reports unavailable search without inventing listings. See the [official API reference](https://github.com/channel3-ai/skills/blob/main/skills/channel3-api/references/api-reference.md).
 
 ### Merchant studio
 
@@ -166,7 +174,7 @@ Browser tests use an isolated SQLite file and port 3107. PayPal browser tests in
 
 See [architecture](docs/architecture.md) and [demo checklist](docs/demo.md). The sandbox demo supports one item per order, USD pricing, no delivery or tax charges, and a maximum $80 purchase. Creator payouts, AG Studio, live PayPal processing in Shopipal, multi-merchant sandbox checkout, and physical inventory fulfillment are not implemented. Shopify checkout and fulfillment remain owned by the connected store.
 
-Application code, original SVG sample-product illustrations, and documentation were created for this hackathon build. PayPal provides sandbox order creation, buyer approval, and capture; OpenRouter provides the language model; AG Grid Community provides the merchant order table; Shopify provides the connected book catalog and store checkout. Service API keys, client secrets, database tokens, and session secrets are not published in this repository.
+Application code, original SVG sample-product illustrations, and documentation were created for this hackathon build. PayPal provides sandbox order creation, buyer approval, and capture; OpenRouter provides the language model; AG Grid Community provides the merchant order table; Channel3 provides external retailer discovery; Shopify provides the connected book catalog and store checkout. Service API keys, client secrets, database tokens, and session secrets are not published in this repository.
 
 ## License
 
