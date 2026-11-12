@@ -48,14 +48,14 @@ const part = z.discriminatedUnion("type", [
     ...tool,
     type: z.literal("tool-search_products"),
     output: z.object({
-      products: z.array(product).max(20).optional(),
-      books: z.array(book).max(20).optional(),
+      products: z.array(product).max(1000).optional(),
+      books: z.array(book).max(300).optional(),
     }),
   }),
   z.object({
     ...tool,
     type: z.literal("tool-search_store_books"),
-    output: z.object({ products: z.array(book).max(20).optional() }),
+    output: z.object({ products: z.array(book).max(300).optional() }),
   }),
   z.object({
     ...tool,

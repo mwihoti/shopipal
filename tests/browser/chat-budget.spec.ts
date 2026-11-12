@@ -280,3 +280,82 @@ test("unreadable or blocked browser storage does not prevent chatting", async ({
     "Search complete.",
   );
 });
+
+test("shows all affordable store matches beyond three and retains them on refresh", async ({
+  page,
+}) => {
+  const books = Array.from({ length: 5 }, (_, i) => ({
+    variantId: `gid://shopify/ProductVariant/${i + 1}`,
+    title: `Affordable book ${i}`,
+    variantTitle: "",
+    description: "PDF",
+    image: null,
+    productUrl: "https://pdf-color-games.myshopify.com/products/book",
+    amount: "130.00",
+    currency: "KES",
+    maxUsdCents: 1999,
+    usdEstimate: {
+      cents: 100,
+      kesPerUsd: 130,
+      updatedAt: "2026-11-12T00:00:00.000Z",
+    },
+  }));
+  const products = Array.from({ length: 5 }, (_, i) => ({
+    ...product,
+    id: `affordable-${i}`,
+    title: `Affordable product ${i}`,
+    priceCents: 100 + i * 100,
+  }));
+  const events = [
+    { type: "start", messageId: "all-affordable" },
+    { type: "start-step" },
+    {
+      type: "tool-input-available",
+      toolCallId: "all",
+      toolName: "search_products",
+      input: { query: "" },
+    },
+    {
+      type: "tool-output-available",
+      toolCallId: "all",
+      output: {
+        products: [
+          ...products,
+          {
+            ...product,
+            id: "boundary",
+            title: "Exactly twenty dollars",
+            priceCents: 2000,
+          },
+        ],
+        books,
+      },
+    },
+    { type: "finish-step" },
+    { type: "finish" },
+  ];
+  await page.route("**/api/chat", (r) =>
+    r.fulfill({
+      contentType: "text/event-stream",
+      headers: { "x-vercel-ai-ui-message-stream": "v1" },
+      body:
+        events.map((e) => `data: ${JSON.stringify(e)}\n\n`).join("") +
+        "data: [DONE]\n\n",
+    }),
+  );
+  await page.goto("/");
+  await page
+    .getByLabel("What are you looking for?")
+    .fill("List all store products below $20");
+  await page.getByRole("button", { name: "Send message", exact: true }).click();
+  await expect(
+    page.locator(".chat-message.assistant .chat-matches button"),
+  ).toHaveCount(10);
+  await expect(page.locator(".chat-message.assistant")).not.toContainText(
+    "Exactly twenty dollars",
+  );
+  await page.reload();
+  await expect(
+    page.locator(".chat-message.assistant .chat-matches button"),
+  ).toHaveCount(10);
+});

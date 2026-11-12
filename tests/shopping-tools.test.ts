@@ -159,3 +159,57 @@ it("clamps external retailer searches to typed KES and USD budgets", async () =>
   );
   expect(searchMarketProducts).toHaveBeenLastCalledWith("books", 100);
 });
+
+it("returns every matching store product and book, including more than three from each catalog", async () => {
+  const { searchStoreBooks } = await import("../src/lib/shopify");
+  const products = Array.from({ length: 5 }, (_, i) => ({
+    id: `product-${i}`,
+    title: `Product ${i}`,
+    color: "sage",
+    description: "Sample",
+    image: "/product.svg",
+    category: "Essentials",
+    tags: "sample",
+    available: true,
+    priceCents: 200 + i * 100,
+  }));
+  const books = Array.from({ length: 5 }, (_, i) => ({
+    variantId: `gid://shopify/ProductVariant/${i + 1}`,
+    title: `Book ${i}`,
+    variantTitle: "",
+    description: "PDF",
+    image: null,
+    productUrl: "https://pdf-color-games.myshopify.com/products/book",
+    amount: "130.00",
+    currency: "KES",
+  }));
+  vi.mocked(searchProducts).mockResolvedValueOnce(products);
+  const storeResult = {
+    products: books,
+    hasMore: false,
+    currency: "KES",
+    storeUrl: "https://pdf-color-games.myshopify.com",
+  };
+  vi.mocked(searchStoreBooks)
+    .mockResolvedValueOnce(storeResult)
+    .mockResolvedValueOnce(storeResult);
+  const tools = shoppingTools("session", 1999);
+  const result = await tools.search_products.execute!(
+    { query: "show all products below $20" },
+    options,
+  );
+  expect(searchProducts).toHaveBeenLastCalledWith("", 1999);
+  expect(result).toMatchObject({
+    products,
+    books: books.map((book) =>
+      expect.objectContaining({ variantId: book.variantId }),
+    ),
+  });
+  expect(
+    await tools.search_store_books.execute!({ query: "" }, options),
+  ).toMatchObject({
+    products: Array.from({ length: 5 }, () =>
+      expect.objectContaining({ amount: "130.00" }),
+    ),
+  });
+});

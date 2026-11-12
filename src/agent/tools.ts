@@ -19,7 +19,7 @@ export function shoppingTools(
   return {
     search_store_books: tool({
       description:
-        "Search the connected pdf-color game Shopify store for real printable books. Server-converted USD estimates enforce the shopper USD budget against KES prices. Use short keywords or an empty query to browse. Only apply maxPriceKES when the shopper explicitly gives a KES budget. Return at most three matches; never describe colouring/activity books as reading storybooks.",
+        "Search the connected pdf-color game Shopify store for real printable books. Server-converted USD estimates enforce the shopper USD budget against KES prices. Use short keywords or an empty query to browse. Only apply maxPriceKES when the shopper explicitly gives a KES budget. Return every matching available book; never describe colouring/activity books as reading storybooks.",
       inputSchema: z.object({
         query: z.string().max(200),
         maxPriceKES: z.number().finite().nonnegative().max(1000000).optional(),
@@ -34,11 +34,7 @@ export function shoppingTools(
           budgetCents,
           Number.isFinite(max) ? Math.floor(max * 100) : undefined,
         );
-        return {
-          ...result,
-          products: result.products.slice(0, 3),
-          hasMore: result.hasMore || result.products.length > 3,
-        };
+        return result;
       },
     }),
     prepare_store_checkout: tool({
@@ -52,27 +48,35 @@ export function shoppingTools(
     }),
     search_products: tool({
       description:
-        "Find available catalog products within the shopper budget. Return at most three matches.",
+        "Find every available catalog product within the shopper budget, including connected Shopify books. Use an empty query for general price-only requests; use short item keywords only when a category or feature is requested. Return all matches, without a three-item limit.",
       inputSchema: z.object({
         query: z.string().max(200),
         maxPriceCents: z.number().int().nonnegative().optional(),
       }),
       execute: async ({ query, maxPriceCents }) => {
         const max = Math.min(await usdLimit(), maxPriceCents ?? budgetCents);
-        const products = (await searchProducts(query, max)).slice(0, 3);
+        const cleaned = query
+          .replace(
+            /\b(?:under|less than|below|up to|at most|within)\s*(?:US\$|\$|USD|KES|KSH)?\s*\d+(?:,\d{3})*(?:\.\d{1,2})?\s*(?:USD|dollars?|KES|KSH|shillings?)?/gi,
+            "",
+          )
+          .trim();
         const general =
-          /^(?:(?:fun|something|anything|gift|gifts|browse|all|affordable|cheap|budget|items|products)|\s)*$/i.test(
-            query,
+          /^(?:(?:show|list|me|the|every|everything|fun|something|anything|gift|gifts|browse|all|available|affordable|cheap|budget|items|products)|\s|[.!?])*$/i.test(
+            cleaned,
           );
+        const searchQuery = general ? "" : cleaned;
+        const products = await searchProducts(searchQuery, max);
         try {
           const result = await searchAffordableBooks(
-            general ? "" : query,
+            searchQuery,
             Math.min(budgetCents, maxPriceCents ?? budgetCents),
             storeBudgetCents,
           );
           return {
             products,
-            books: result.products.slice(0, Math.max(0, 3 - products.length)),
+            books: result.products,
+            hasMoreBooks: result.hasMore,
             budgetCents: max,
             exchangeRate: result.exchangeRate,
             message:
