@@ -6,17 +6,17 @@
 
 Built for the PayPal AI Hackathon. The app has two shopping flows:
 
-| Flow               | Catalog and currency                                | Checkout                                                     | Where orders appear                                           |
-| ------------------ | --------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------- |
-| PayPal demo        | 12 sample products in USD; maximum $80 per purchase | PayPal **sandbox**, using a personal sandbox buyer           | Shopipal merchant studio, including referral commissions      |
-| Shopify book store | Published books from pdf-color game, priced in KES  | The store's **Shopify checkout**, using its payment settings | Shopify order admin; digital delivery is managed by the store |
+| Flow        | Catalog and currency                                | Checkout                                                                                             | Where orders appear                                                                                          |
+| ----------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| PayPal demo | 12 sample products in USD; maximum $80 per purchase | PayPal **sandbox**, using a personal sandbox buyer                                                   | Shopipal merchant studio, including referral commissions                                                     |
+| Book store  | Published books from pdf-color game, priced in KES  | Choose **Shopify checkout** for store payment/delivery, or **PayPal sandbox** for a USD test payment | Shopify orders stay in Shopify; PayPal sandbox book payments appear in Shopipal without download fulfillment |
 
 The Shopify store is separate from the PayPal sandbox demo. Its checkout may charge real money. Review the final total and payment method there before paying. Chat uses the USD budget ceiling and exchange-rate estimates to compare items across both catalogs. Shopify still controls the final payable total and payment settings; demo referral commissions do not apply to its purchases.
 
 ## What works
 
 - Conversational discovery through OpenRouter and the Vercel AI SDK, with server-side catalog tools and a five-step execution limit.
-- Twelve illustrated demo products, category filters, and a shopper-controlled USD budget. Explicit price limits such as “under 5 dollars” or “less than $5” also constrain chat results and review quotes; follow-up messages keep the last stated limit until it is changed. KES book prices are converted to estimated USD when checking a dollar budget; an explicit KES limit is also respected.
+- Twelve photo-backed demo products, category filters, and a shopper-controlled USD budget. Explicit price limits such as “under 5 dollars” or “less than $5” also constrain chat results and review quotes; follow-up messages keep the last stated limit until it is changed. KES book prices are converted to estimated USD when checking a dollar budget; an explicit KES limit is also respected.
 - Server-priced quotes, explicit purchase approval, and PayPal Orders v2 checkout.
 - Session ownership, quote expiry, merchant and amount verification, idempotent requests, and interrupted-capture recovery.
 - `?ref=alice` (15%) and `?ref=bob` (10%) attribution, recorded only after a completed sandbox capture.
@@ -66,10 +66,10 @@ A completed $16.00 sandbox purchase with Alice's $2.40 commission has been demon
 1. Open the [live app](https://shopipal.vercel.app) and select **Book store**, or scroll to the book collection.
 2. Ask **“Find a printable colouring book under 150 KES.”** You can also ask **“Show me something fun under $5”**. The assistant checks both catalogs and converts KES book prices to estimated USD.
 3. Select a returned book and review its title, variant, price, description, and store listing.
-4. Click **I approve · Continue to Shopify** to create a one-item cart and open the store's checkout. Prices and availability are checked again before handoff.
+4. Choose **Shopify checkout** to create a one-item cart and open the store's checkout, or choose **PayPal sandbox** to prepare a server-priced USD test quote. The PayPal price is locked for 15 minutes and requires a separate approval before the PayPal button appears. PayPal sandbox does not create a Shopify order or deliver the PDF. Prices and availability are checked again before handoff.
 5. Review Shopify's final total and available payment methods before deciding whether to pay. Your PayPal demo sandbox buyer login is not a general Shopify login, and the store does not inherit Shopipal's sandbox payment configuration.
 
-The live catalog, assistant search, mobile layout, and Shopify checkout handoff have been checked. A completed Shopify purchase and digital-file delivery have **not** been verified. Shopify purchases do not appear in the Shopipal sandbox dashboard.
+The live catalog, assistant search, mobile layout, and Shopify checkout handoff have been checked. A completed Shopify purchase and digital-file delivery have **not** been verified. Shopify purchases do not appear in the Shopipal sandbox dashboard. PayPal sandbox book payments do appear there, with no demo referral commission and no Shopify download/order.
 
 ## Run locally
 
@@ -120,7 +120,7 @@ Set these in the ignored `.env.local` file for development, or in Vercel's envir
 
 Create a key at [OpenRouter](https://openrouter.ai/settings/keys) and choose a [tool-capable model](https://openrouter.ai/models). The app uses `@openrouter/ai-sdk-provider`, `ai`, and `@ai-sdk/react`; it does not need a separate OpenAI key or Vercel AI Gateway.
 
-The model can call `search_products`, `get_product`, and `prepare_checkout` for the sandbox collection, and `search_store_books` and `prepare_store_checkout` for the book store. These tools search or prepare reviews. They do not approve, capture, refund, or pay creators. The Shopify cart is created only after the shopper approves the review in the UI.
+The model can call `search_products`, `get_product`, and `prepare_checkout` for the sandbox collection, and `search_store_books` and `prepare_store_checkout` for the book store. These tools search or prepare reviews. They do not approve, capture, refund, or pay creators. The shopper chooses the checkout in the book review. The Shopify cart is created only after approval in the UI; a PayPal sandbox book quote is prepared through a separate endpoint and requires its own approval.
 
 ### Merchant studio
 
@@ -166,8 +166,14 @@ Browser tests use an isolated SQLite file and port 3107. PayPal browser tests in
 
 See [architecture](docs/architecture.md) and [demo checklist](docs/demo.md). The sandbox demo supports one item per order, USD pricing, no delivery or tax charges, and a maximum $80 purchase. Creator payouts, AG Studio, live PayPal processing in Shopipal, multi-merchant sandbox checkout, and physical inventory fulfillment are not implemented. Shopify checkout and fulfillment remain owned by the connected store.
 
-Application code, original sample-product illustrations, and documentation were created for this hackathon build. PayPal provides sandbox order creation, buyer approval, and capture; OpenRouter provides the language model; AG Grid Community provides the merchant order table; Shopify provides the connected book catalog and store checkout. Service API keys, client secrets, database tokens, and session secrets are not published in this repository.
+Application code, original SVG sample-product illustrations, and documentation were created for this hackathon build. PayPal provides sandbox order creation, buyer approval, and capture; OpenRouter provides the language model; AG Grid Community provides the merchant order table; Shopify provides the connected book catalog and store checkout. Service API keys, client secrets, database tokens, and session secrets are not published in this repository.
 
 ## License
 
-This project's source code, original sample-product illustrations, and documentation are publicly available under the **[MIT License](LICENSE)**, copyright © 2026 Daniel Mwihoti. You may use, modify, and redistribute them subject to that license. Third-party packages retain their respective licenses. Books, cover images, and downloadable files offered by the connected Shopify store are separate store content and are not licensed for redistribution by this repository.
+This project's source code, original sample-product illustrations, and documentation are publicly available under the **[MIT License](LICENSE)**, copyright © 2026 Daniel Mwihoti. You may use, modify, and redistribute them subject to that license. Third-party packages retain their respective licenses. The reference photographs listed in [photo credits](PHOTO_CREDITS.md) remain under the Pexels License and are not relicensed under MIT. Books, cover images, and downloadable files offered by the connected Shopify store are separate store content and are not licensed for redistribution by this repository.
+
+## Moving toward a real store
+
+The physical collection still contains sample products and prices. Its real photographs are licensed references to similar market products, not confirmed stock or exact supplier images. See [photo credits](PHOTO_CREDITS.md). Replace them with your actual product photos and verify variant sizes, materials, capacity, prices, and inventory before offering physical fulfillment.
+
+The app's direct PayPal flow is deliberately sandbox-only and takes no real money. For actual book purchases, use Shopify and verify that its payments and digital-file delivery are configured. Direct live PayPal sales need live merchant credentials, a supported live integration, delivery/order synchronization, and a completed real fulfillment test. None of those are enabled by replacing photos or adding the sandbox book payment choice.

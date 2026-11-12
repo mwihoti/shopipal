@@ -24,6 +24,12 @@ export type Quote = {
   commission_bps: number;
   expires_at: number;
   approved_at: number | null;
+  source?: "catalog" | "shopify-book";
+  source_variant_id?: string | null;
+  source_amount?: string | null;
+  source_currency?: string | null;
+  source_exchange_rate?: number | null;
+  source_rate_updated_at?: string | null;
 };
 export type Order = {
   id: string;

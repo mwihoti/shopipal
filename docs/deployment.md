@@ -70,3 +70,11 @@ Book prices use KES. Chat checks both catalogs against the USD budget using a da
 Shopify controls the final total, payment methods, payment/test mode, order creation, and digital fulfillment. Review the store's payment settings before purchasing. Shopify purchases do not appear in the sandbox dashboard and do not accrue its demo referral commissions. Digital files must be attached and delivery configured in the Shopify store. The current catalog contains printable colouring/activity books; publish reading books there to make those discoverable as well.
 
 References: [Tokenless Storefront API](https://shopify.dev/docs/api/storefront/2026-10), [Cart creation and checkout](https://shopify.dev/docs/storefronts/headless/building-with-the-storefront-api/cart/manage).
+
+## Book PayPal sandbox quotes and photographs
+
+Run `npm run db:migrate` against the remote database before deploying the book PayPal feature. Migration `003-book-quotes.sql` adds book source and exchange-rate snapshots to quotes. Mirrored book products satisfy quote ownership/foreign-key accounting but are excluded from the USD sample catalog. Existing orders and amounts are preserved.
+
+Book reviews offer Shopify checkout or PayPal sandbox. The PayPal option converts the fresh KES listing price into USD, checks the budget/cap, snapshots the source/price/rate for 15 minutes, and uses the existing approved PayPal lifecycle. A changed listing price or unavailable variant blocks a new payment; later rate changes do not rewrite an approved quote. No Shopify order or digital download is generated for sandbox payments. Book sandbox payments do not earn demo referral commissions.
+
+The 12 sample product photos are bundled locally and credited in `PHOTO_CREDITS.md`. Existing database rows with the original SVG paths use the matching reference photo at read time; custom merchant image paths are retained. Source prices and stock are not changed by this image update. These reference photographs do not establish real inventory.

@@ -5,7 +5,7 @@
     "description": "Lightweight everyday running shoe with a breathable upper.",
     "category": "Footwear",
     "priceCents": 7400,
-    "image": "/products/trail-74.svg",
+    "image": "/products/photos/trail-74.jpg",
     "color": "sand",
     "available": true,
     "tags": "running shoe neutral trail lightweight"
@@ -16,7 +16,7 @@
     "description": "Soft cushioning and an airy knit for daily miles.",
     "category": "Footwear",
     "priceCents": 6800,
-    "image": "/products/pace-68.svg",
+    "image": "/products/photos/pace-68.jpg",
     "color": "sage",
     "available": true,
     "tags": "running shoe neutral road breathable"
@@ -27,7 +27,7 @@
     "description": "A versatile runner with supportive cushioning.",
     "category": "Footwear",
     "priceCents": 7900,
-    "image": "/products/stride-79.svg",
+    "image": "/products/photos/stride-79.jpg",
     "color": "stone",
     "available": true,
     "tags": "running shoe neutral road supportive"
@@ -38,7 +38,7 @@
     "description": "Technical grip for ambitious trail days.",
     "category": "Footwear",
     "priceCents": 11000,
-    "image": "/products/summit-110.svg",
+    "image": "/products/photos/summit-110.jpg",
     "color": "charcoal",
     "available": true,
     "tags": "running shoe trail technical"
@@ -49,7 +49,7 @@
     "description": "A clean low-top sneaker for wherever the day goes.",
     "category": "Footwear",
     "priceCents": 5900,
-    "image": "/products/court-59.svg",
+    "image": "/products/photos/court-59.jpg",
     "color": "cream",
     "available": true,
     "tags": "sneaker casual shoe"
@@ -60,7 +60,7 @@
     "description": "A bold lightweight trainer built for movement.",
     "category": "Footwear",
     "priceCents": 7200,
-    "image": "/products/tempo-72.svg",
+    "image": "/products/photos/tempo-72.jpg",
     "color": "coral",
     "available": true,
     "tags": "running shoe lightweight"
@@ -71,7 +71,7 @@
     "description": "An easy 18L bag with room for the daily essentials.",
     "category": "Carry",
     "priceCents": 4800,
-    "image": "/products/daypack-48.svg",
+    "image": "/products/photos/daypack-48.jpg",
     "color": "sage",
     "available": true,
     "tags": "backpack bag everyday"
@@ -82,7 +82,7 @@
     "description": "A sturdy cotton canvas tote for little adventures.",
     "category": "Carry",
     "priceCents": 3200,
-    "image": "/products/tote-32.svg",
+    "image": "/products/photos/tote-32.jpg",
     "color": "sand",
     "available": true,
     "tags": "bag tote canvas"
@@ -93,7 +93,7 @@
     "description": "Keep the essentials close in a compact crossbody.",
     "category": "Carry",
     "priceCents": 3900,
-    "image": "/products/sling-39.svg",
+    "image": "/products/photos/sling-39.jpg",
     "color": "charcoal",
     "available": true,
     "tags": "bag crossbody travel"
@@ -104,7 +104,7 @@
     "description": "A 750ml insulated bottle for your everyday rhythm.",
     "category": "Essentials",
     "priceCents": 2400,
-    "image": "/products/bottle-24.svg",
+    "image": "/products/photos/bottle-24.jpg",
     "color": "sage",
     "available": true,
     "tags": "water bottle insulated"
@@ -115,7 +115,7 @@
     "description": "An easy cotton cap with an adjustable fit.",
     "category": "Essentials",
     "priceCents": 2200,
-    "image": "/products/cap-22.svg",
+    "image": "/products/photos/cap-22.jpg",
     "color": "sand",
     "available": true,
     "tags": "hat cap cotton"
@@ -126,7 +126,7 @@
     "description": "A cushioned pair for your next favorite shoes.",
     "category": "Essentials",
     "priceCents": 1600,
-    "image": "/products/socks-16.svg",
+    "image": "/products/photos/socks-16.jpg",
     "color": "cream",
     "available": true,
     "tags": "socks running cotton"

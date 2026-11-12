@@ -1112,3 +1112,47 @@ a {
     grid-template-columns: 1fr;
   }
 }
+
+.payment-choice {
+  margin: 24px 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+}
+.payment-choice legend {
+  padding: 0 6px;
+  font-weight: bold;
+}
+.payment-choice label {
+  display: block;
+  padding: 12px 0;
+  cursor: pointer;
+}
+.payment-choice input {
+  accent-color: var(--green);
+  margin-right: 8px;
+}
+.payment-choice small {
+  display: block;
+  margin: 7px 0 0 25px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.reference-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: #fafbf1e8;
+  border-radius: 20px;
+  padding: 6px 9px;
+  font-size: 10px;
+  color: var(--ink);
+}
+.photo-credit {
+  display: inline-block;
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 11px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

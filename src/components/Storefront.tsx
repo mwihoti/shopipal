@@ -577,8 +577,9 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
             </p>
           )}
           <p className="collection-note">
-            A curated demo collection. Product illustrations represent sample
-            items.
+            Sample collection · reference photographs show similar market
+            products, not confirmed inventory. Checkout remains PayPal sandbox.
+            Store books above use their actual Shopify listings.
           </p>
         </section>
         <section className="how-section" id="how-it-works">
@@ -634,6 +635,11 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
             key={book.variantId}
             book={book}
             onClose={closePanel}
+            onPayPalQuote={(q) => {
+              setBook(null);
+              setReceipt(null);
+              setQuote(q);
+            }}
           />
         </PurchaseDialog>
       ) : null}

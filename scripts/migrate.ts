@@ -6,7 +6,11 @@ const db = database();
 await db.execute(
   "CREATE TABLE IF NOT EXISTS migrations (name TEXT PRIMARY KEY, applied_at INTEGER NOT NULL)",
 );
-for (const name of ["schema.sql", "002-order-merchant.sql"]) {
+for (const name of [
+  "schema.sql",
+  "002-order-merchant.sql",
+  "003-book-quotes.sql",
+]) {
   const existing = await db.execute({
     sql: "SELECT name FROM migrations WHERE name=?",
     args: [name],

@@ -39,6 +39,13 @@ export function ApprovalCard({
       <p className="muted">
         Take a moment to review. You always have the final say.
       </p>
+      {quote.source === "shopify-book" ? (
+        <p className="notice">
+          Book · PayPal sandbox test. This USD price is locked for this
+          15-minute review. No Shopify order or PDF download is created; use
+          Shopify checkout for delivery.
+        </p>
+      ) : null}
       <dl className="review-list">
         <div>
           <dt>Item</dt>
@@ -52,6 +59,14 @@ export function ApprovalCard({
           <dt>Currency</dt>
           <dd>USD · Sandbox</dd>
         </div>
+        {quote.bookPrice ? (
+          <div>
+            <dt>Shopify listing</dt>
+            <dd>
+              {quote.bookPrice.currency} {quote.bookPrice.amount}
+            </dd>
+          </div>
+        ) : null}
         <div>
           <dt>Your budget</dt>
           <dd>{money(quote.budgetCents)}</dd>
@@ -134,6 +149,12 @@ export function ReceiptCard({
           : "Your payment has not been confirmed yet. Check its status before retrying."}
       </p>
       <h3>{receipt.quote.title}</h3>
+      {receipt.quote.source === "shopify-book" ? (
+        <p className="notice">
+          This was a PayPal sandbox book payment. No Shopify order or download
+          was created.
+        </p>
+      ) : null}
       <div className="review-total">
         <span>Total</span>
         <strong>{money(receipt.quote.amountCents)}</strong>

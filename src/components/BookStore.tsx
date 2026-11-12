@@ -2,6 +2,7 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { ArrowUpRight, X } from "lucide-react";
+import type { PublicQuote } from "@/lib/quotes";
 import { request } from "@/lib/client";
 import { STORE_URL, bookPrice, type StoreBook } from "@/lib/store-types";
 
@@ -141,16 +142,33 @@ export function BookStore({
 export function StoreBookReview({
   book,
   onClose,
+  onPayPalQuote,
 }: {
   book: StoreBook;
   onClose: () => void;
+  onPayPalQuote: (quote: PublicQuote) => void;
 }) {
+  const [method, setMethod] = useState<"shopify" | "paypal">("shopify");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   async function checkout() {
     setBusy(true);
     setError("");
     try {
+      if (method === "paypal") {
+        const quote = await request<PublicQuote>("/api/store/paypal-quote", {
+          method: "POST",
+          body: JSON.stringify({
+            variantId: book.variantId,
+            expectedAmount: book.amount,
+            ...(book.maxUsdCents === undefined
+              ? {}
+              : { budgetCents: book.maxUsdCents }),
+          }),
+        });
+        onPayPalQuote(quote);
+        return;
+      }
       const result = await request<{ checkoutUrl: string }>(
         "/api/store/checkout",
         {
@@ -217,16 +235,55 @@ export function StoreBookReview({
           . This is an estimate; checkout conversion and fees may differ.
         </p>
       ) : null}
-      <p className="muted">
-        You’re leaving the PayPal sandbox demo for the store’s Shopify checkout.
-        Its payment settings apply and may charge real money. Review the final
-        total, taxes, and payment method there before paying.
-      </p>
-      <p className="tiny muted">
-        This creates a cart only. Your pal cannot pay for you. Shopify purchases
-        will appear in the store’s order admin; this demo dashboard tracks
-        sandbox orders only.
-      </p>
+      <fieldset className="payment-choice">
+        <legend>Choose your checkout</legend>
+        <label>
+          <input
+            type="radio"
+            name="book-checkout"
+            value="shopify"
+            checked={method === "shopify"}
+            onChange={() => setMethod("shopify")}
+            disabled={busy}
+          />{" "}
+          Shopify checkout{" "}
+          <small>Store payment methods and digital delivery</small>
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="book-checkout"
+            value="paypal"
+            checked={method === "paypal"}
+            onChange={() => setMethod("paypal")}
+            disabled={busy}
+          />{" "}
+          PayPal sandbox{" "}
+          <small>USD test payment · no Shopify order or download</small>
+        </label>
+      </fieldset>
+      {method === "paypal" ? (
+        <p className="notice">
+          PayPal uses a server-priced USD quote based on the current exchange
+          rate, valid for 15 minutes. This sandbox test does not deliver the PDF
+          or create a Shopify order. Choose Shopify to purchase and receive the
+          book.
+        </p>
+      ) : (
+        <>
+          <p className="muted">
+            You’re leaving the PayPal sandbox demo for the store’s Shopify
+            checkout. Its payment settings apply and may charge real money.
+            Review the final total, taxes, and payment method there before
+            paying.
+          </p>
+          <p className="tiny muted">
+            This creates a cart only. Your pal cannot pay for you. Shopify
+            purchases will appear in the store’s order admin; this demo
+            dashboard tracks sandbox orders only.
+          </p>
+        </>
+      )}
       <a
         href={book.productUrl}
         target="_blank"
@@ -245,7 +302,11 @@ export function StoreBookReview({
         disabled={busy}
         onClick={() => void checkout()}
       >
-        {busy ? "Preparing checkout…" : "I approve · Continue to Shopify"}
+        {busy
+          ? "Preparing checkout…"
+          : method === "paypal"
+            ? "Review PayPal sandbox payment"
+            : "I approve · Continue to Shopify"}
         <ArrowUpRight size={17} />
       </button>
     </aside>

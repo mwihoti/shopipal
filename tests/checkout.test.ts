@@ -10,6 +10,14 @@ import {
 import { readFileSync } from "node:fs";
 import type { PayPalOrder } from "../src/lib/paypal";
 import { randomUUID } from "node:crypto";
+vi.mock("../src/lib/shopify", () => ({
+  getStoreBook: vi.fn(),
+  searchStoreBooks: vi.fn(),
+}));
+vi.mock("../src/lib/exchange-rate", async (original) => ({
+  ...(await original<typeof import("../src/lib/exchange-rate")>()),
+  usdKesRate: vi.fn(),
+}));
 vi.mock("../src/lib/paypal", async (importOriginal) => {
   const original = await importOriginal<typeof import("../src/lib/paypal")>();
   return {
@@ -22,11 +30,13 @@ vi.mock("../src/lib/paypal", async (importOriginal) => {
 process.env.DATABASE_URL = ":memory:";
 process.env.SPENDING_CAP_USD = "80";
 const { database } = await import("../src/lib/db");
-const { prepareQuote, ownedQuote, validateQuote } =
+const { prepareQuote, prepareBookQuote, ownedQuote, validateQuote } =
   await import("../src/lib/quotes");
 const { approveAndCreate, captureOrder, orderReceipt } =
   await import("../src/lib/orders");
 const paypal = await import("../src/lib/paypal");
+const shopify = await import("../src/lib/shopify");
+const fx = await import("../src/lib/exchange-rate");
 const { shoppingTools } = await import("../src/agent/tools");
 const db = database();
 const sid = randomUUID();
@@ -67,6 +77,12 @@ beforeAll(async () => {
       "utf8",
     ),
   );
+  await db.executeMultiple(
+    readFileSync(
+      new URL("../data/003-book-quotes.sql", import.meta.url),
+      "utf8",
+    ),
+  );
   await db.execute({
     sql: "INSERT INTO sessions(id,created_at) VALUES (?,?)",
     args: [sid, Date.now()],
@@ -78,6 +94,20 @@ beforeAll(async () => {
 });
 beforeEach(async () => {
   vi.clearAllMocks();
+  vi.mocked(shopify.getStoreBook).mockResolvedValue({
+    variantId: "gid://shopify/ProductVariant/42",
+    title: "Quiet Patterns",
+    variantTitle: "",
+    description: "Printable PDF",
+    image: null,
+    productUrl: "https://pdf-color-games.myshopify.com/products/quiet-patterns",
+    amount: "130.00",
+    currency: "KES",
+  });
+  vi.mocked(fx.usdKesRate).mockResolvedValue({
+    kesPerUsd: 130,
+    updatedAt: new Date().toISOString(),
+  });
   await db.execute("DELETE FROM orders");
   await db.execute("DELETE FROM quotes");
   await db.execute(
@@ -212,5 +242,94 @@ describe("trusted checkout", () => {
       "get_product",
       "prepare_checkout",
     ]);
+  });
+});
+
+describe("PayPal book quotes", () => {
+  it("snapshots the current book price, conversion and source", async () => {
+    const q = await prepareBookQuote(
+      sid,
+      "gid://shopify/ProductVariant/42",
+      "130.00",
+      499,
+    );
+    expect(q).toMatchObject({
+      title: "Quiet Patterns",
+      amountCents: 100,
+      currency: "USD",
+      source: "shopify-book",
+      commissionBps: 0,
+      bookPrice: { amount: "130.00", currency: "KES", kesPerUsd: 130 },
+    });
+    expect((await ownedQuote(q.id, sid)).source_variant_id).toBe(
+      "gid://shopify/ProductVariant/42",
+    );
+    await expect(prepareQuote(sid, q.productId, 8000)).rejects.toThrow(
+      "book review",
+    );
+  });
+  it("rejects changed listing prices and insufficient budgets", async () => {
+    await expect(
+      prepareBookQuote(sid, "gid://shopify/ProductVariant/42", "1.00", 499),
+    ).rejects.toThrow("price changed");
+    await expect(
+      prepareBookQuote(sid, "gid://shopify/ProductVariant/42", "130.00", 99),
+    ).rejects.toThrow("budget");
+    expect((await db.execute("SELECT id FROM quotes")).rows).toHaveLength(0);
+  });
+  it("locks a quote's USD price while checking the current KES listing", async () => {
+    const q = await prepareBookQuote(
+      sid,
+      "gid://shopify/ProductVariant/42",
+      "130.00",
+      499,
+    );
+    vi.mocked(fx.usdKesRate).mockResolvedValue({
+      kesPerUsd: 129,
+      updatedAt: new Date().toISOString(),
+    });
+    await prepareBookQuote(
+      sid,
+      "gid://shopify/ProductVariant/42",
+      "130.00",
+      499,
+    );
+    await expect(
+      validateQuote(await ownedQuote(q.id, sid)),
+    ).resolves.toBeUndefined();
+    vi.mocked(shopify.getStoreBook).mockResolvedValue({
+      ...(await shopify.getStoreBook("")),
+      amount: "150.00",
+    });
+    await expect(validateQuote(await ownedQuote(q.id, sid))).rejects.toThrow(
+      "book price changed",
+    );
+  });
+  it("completes the trusted sandbox lifecycle with a book source receipt", async () => {
+    const q = await prepareBookQuote(
+      sid,
+      "gid://shopify/ProductVariant/42",
+      "130.00",
+      499,
+    );
+    vi.mocked(paypal.createPayPalOrder).mockResolvedValue(
+      remote("CREATED", "1.00"),
+    );
+    vi.mocked(paypal.getPayPalOrder).mockResolvedValue(
+      remote("APPROVED", "1.00"),
+    );
+    vi.mocked(paypal.capturePayPalOrder).mockImplementation(async () => {
+      vi.mocked(paypal.getPayPalOrder).mockResolvedValue(
+        remote("COMPLETED", "1.00"),
+      );
+      return remote("COMPLETED", "1.00");
+    });
+    const o = await approveAndCreate(q.id, sid);
+    const receipt = await captureOrder(o.orderId, sid);
+    expect(receipt).toMatchObject({
+      status: "COMPLETED",
+      commissionCents: 0,
+      quote: { source: "shopify-book", amountCents: 100 },
+    });
   });
 });

@@ -1,12 +1,14 @@
+import { withProductPhoto } from "./product-photos";
 import fallback from "../../data/catalog.json";
-import { eq } from "drizzle-orm";
+import { and, ne, eq } from "drizzle-orm";
 import { orm } from "./db";
 import { products } from "./schema";
 import { catalogPreviewMode } from "./database-config";
 export async function getProduct(id: string) {
-  return (
+  const product = (
     await orm().select().from(products).where(eq(products.id, id)).limit(1)
   )[0];
+  return product ? withProductPhoto(product) : undefined;
 }
 export async function searchProducts(
   query = "",
@@ -14,7 +16,12 @@ export async function searchProducts(
 ) {
   const all = catalogPreviewMode()
     ? fallback
-    : await orm().select().from(products).where(eq(products.available, true));
+    : await orm()
+        .select()
+        .from(products)
+        .where(
+          and(eq(products.available, true), ne(products.category, "Books")),
+        );
   const words = query
     .toLowerCase()
     .split(/\W+/)
@@ -39,6 +46,7 @@ export async function searchProducts(
         ].includes(w),
     );
   return all
+    .map(withProductPhoto)
     .filter((p) => p.priceCents <= maxCents)
     .map((p) => ({
       p,
