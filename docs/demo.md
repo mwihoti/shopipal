@@ -25,4 +25,4 @@
 
 Keep the public YouTube video under three minutes. Use no unlicensed music. Include repository, video, hosted URL, screenshots, setup instructions, and the AI tools used in the English submission. Target 21:00 EAT on 12 November 2026, ahead of the stated 23:00 EAT deadline; recheck the official event page before submission.
 
-Do not claim Shopify catalog access or creator payouts: those integrations are deferred. Do not describe mocked tests or a read-only hosted preview as a real payment demonstration.
+Shopify catalog access, book search, and approved checkout handoff are implemented. Demonstrate them separately from the PayPal sandbox flow. Do not claim a completed Shopify purchase, verified digital delivery, or creator payouts. Do not describe mocked tests or a read-only hosted preview as a real payment demonstration.
