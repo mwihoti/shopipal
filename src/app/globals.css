@@ -1385,3 +1385,13 @@ a {
     transform: none;
   }
 }
+
+.chat-clear {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 10px;
+  padding: 7px 4px;
+}
+.chat-clear:disabled {
+  opacity: 0.45;
+}

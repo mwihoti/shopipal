@@ -1,5 +1,7 @@
 "use client";
 import Link from "next/link";
+import { useChatHistory } from "@/hooks/use-chat-history";
+import type { ChatHistory } from "@/lib/chat-history";
 import { MarketMatches } from "./MarketMatches";
 import { publicHttpsUrl, type MarketProduct } from "@/lib/market-types";
 import { ClosingSection } from "./ClosingSection";
@@ -55,11 +57,27 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
   );
   const {
     messages,
+    setMessages,
     sendMessage,
     status,
     error: chatError,
     clearError,
   } = useChat({ transport });
+  const restoreChat = useCallback(
+    (saved: ChatHistory) => {
+      setMessages(saved.messages);
+      setBudget(saved.budget);
+      setInput(saved.draft);
+    },
+    [setMessages],
+  );
+  const chatReady = useChatHistory({
+    messages,
+    budget,
+    draft: input,
+    enabled: !previewMode,
+    restore: restoreChat,
+  });
   const chatting = status === "submitted" || status === "streaming";
   useEffect(() => {
     let active = true;
@@ -161,7 +179,7 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
     }
   }
   function ask(text: string) {
-    if (previewMode || chatting || !text.trim()) return;
+    if (previewMode || !chatReady || chatting || !text.trim()) return;
     clearError();
     setInput("");
     void sendMessage({ text: text.trim() });
@@ -237,7 +255,22 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
                   thing
                 </small>
               </div>
-              <span className="chat-label">LET’S FIND IT</span>
+              <button
+                className="chat-clear text-button"
+                disabled={
+                  previewMode ||
+                  !chatReady ||
+                  chatting ||
+                  (!messages.length && !input)
+                }
+                onClick={() => {
+                  setMessages([]);
+                  setInput("");
+                  clearError();
+                }}
+              >
+                Clear chat
+              </button>
             </div>
             <div className="chat-content" aria-live="polite">
               {messages.length === 0 ? (
@@ -479,7 +512,7 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
               </label>
               <input
                 id="shopping-message"
-                disabled={previewMode}
+                disabled={previewMode || !chatReady}
                 aria-describedby={previewMode ? "preview-notice" : undefined}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -491,7 +524,9 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
                 }
               />
               <button
-                disabled={previewMode || chatting || !input.trim()}
+                disabled={
+                  previewMode || !chatReady || chatting || !input.trim()
+                }
                 aria-label="Send message"
               >
                 <ArrowUp size={20} />

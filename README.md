@@ -18,6 +18,7 @@ The Shopify store is separate from the PayPal sandbox demo. Its checkout may cha
 
 ## What works
 
+- Chat messages, search cards, the budget setting and your draft are saved in this browser across navigation and refreshes. **Clear chat** removes the saved conversation. Recent history stays on your device; payment approvals and provider metadata are not stored with it.
 - Conversational discovery through OpenRouter and the Vercel AI SDK, with server-side catalog tools and a five-step execution limit.
 - Channel3 retailer discovery through chat, with product images, in-stock USD offers, server-enforced price limits and retailer checkout links. Requires `CHANNEL3_API_KEY`; unavailable searches are reported honestly.
 - Twelve photo-backed demo products, category filters, and a shopper-controlled USD budget. Explicit price limits such as “under 5 dollars” or “less than $5” also constrain chat results and review quotes; follow-up messages keep the last stated limit until it is changed. KES book prices are converted to estimated USD when checking a dollar budget; an explicit KES limit is also respected.

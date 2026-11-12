@@ -218,3 +218,65 @@ test("retailer cards use external checkout and hide unsafe or over-budget offers
   );
   await expect(page.locator(".chat-message.assistant .primary")).toHaveCount(0);
 });
+
+test("chat survives page navigation and reload with its budget and draft, and can be cleared", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.locator(".product-grid article")).toHaveCount(12);
+  await page.getByLabel("Budget in dollars").fill("20");
+  await page
+    .getByLabel("What are you looking for?")
+    .fill("Show something under $20");
+  await page.getByRole("button", { name: "Send message", exact: true }).click();
+  await expect(page.locator(".chat-message.assistant")).toContainText(
+    "Search complete.",
+  );
+  await page.getByLabel("What are you looking for?").fill("Something in green");
+  await page
+    .getByRole("link", { name: /Merchant studio/ })
+    .first()
+    .click();
+  await expect(page).toHaveURL(/\/dashboard/);
+  await page.goto("/");
+  await expect(page.locator(".chat-message.user")).toContainText(
+    "Show something under $20",
+  );
+  await expect(
+    page.locator(".chat-message.assistant .chat-matches button"),
+  ).toHaveCount(1);
+  await expect(page.getByLabel("Budget in dollars")).toHaveValue("20");
+  await expect(page.getByLabel("What are you looking for?")).toHaveValue(
+    "Something in green",
+  );
+  await page.reload();
+  await expect(page.locator(".chat-message.assistant")).toContainText(
+    "Search complete.",
+  );
+  await page.getByRole("button", { name: "Clear chat", exact: true }).click();
+  await expect(page.locator(".chat-message")).toHaveCount(0);
+  await page.reload();
+  await expect(
+    page.getByRole("heading", { name: "What’s on your wishlist?" }),
+  ).toBeVisible();
+  await expect(page.locator(".chat-message")).toHaveCount(0);
+  await expect(page.getByLabel("What are you looking for?")).toHaveValue("");
+});
+
+test("unreadable or blocked browser storage does not prevent chatting", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem("shopipal.chat.v1", "broken json");
+    Storage.prototype.setItem = () => {
+      throw new DOMException("Quota exceeded", "QuotaExceededError");
+    };
+  });
+  await page.goto("/");
+  await expect(page.locator(".product-grid article")).toHaveCount(12);
+  await page.getByLabel("What are you looking for?").fill("Socks under $20");
+  await page.getByRole("button", { name: "Send message", exact: true }).click();
+  await expect(page.locator(".chat-message.assistant")).toContainText(
+    "Search complete.",
+  );
+});
