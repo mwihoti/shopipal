@@ -13,6 +13,9 @@ describe("shopper price constraints", () => {
     ["at most 5 USD", 500],
     ["my budget is $20", 2000],
     ["spend $5", 500],
+    ["I have $5", 500],
+    ["$5", 500],
+    ["5 dollars", 500],
     ["under $0", 0],
   ])("enforces %s", (text, cents) =>
     expect(chatLimits([user(text)], 8000).usdCents).toBe(cents),
@@ -42,6 +45,14 @@ describe("shopper price constraints", () => {
     expect(chatLimits([user("under $5 and at most KES 150")], 8000)).toEqual({
       usdCents: 499,
       kesCents: 15000,
+    });
+  });
+  it("does not mistake ages or page counts for a price", () => {
+    expect(
+      chatLimits([user("a book for 5 year olds with 10 pages")], 8000),
+    ).toEqual({ usdCents: 8000 });
+    expect(chatLimits([user("books for kids under 5 years")], 8000)).toEqual({
+      usdCents: 8000,
     });
   });
   it("ignores quoted product prices and non-text tool data", () => {
