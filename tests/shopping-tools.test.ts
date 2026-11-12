@@ -130,3 +130,16 @@ it("does not admit a KES 130 book under a $0.50 budget", async () => {
     ),
   ).rejects.toThrow("USD budget");
 });
+
+it("also compares USD demo items against a typed KES budget", async () => {
+  const tools = shoppingTools("session", 8000, undefined, 100000);
+  expect(
+    await tools.search_products.execute!({ query: "" }, options),
+  ).toMatchObject({ products: [], budgetCents: 769 });
+  expect(
+    await tools.get_product.execute!({ id: "socks" }, options),
+  ).toHaveProperty("error");
+  await expect(
+    tools.prepare_checkout.execute!({ productId: "socks" }, options),
+  ).rejects.toThrow("budget");
+});

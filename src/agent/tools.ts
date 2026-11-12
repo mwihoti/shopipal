@@ -1,3 +1,4 @@
+import { usdKesRate } from "@/lib/exchange-rate";
 import { searchAffordableBooks, affordableBook } from "@/lib/book-budget";
 import { tool } from "ai";
 import { z } from "zod";
@@ -9,6 +10,11 @@ export function shoppingTools(
   ref?: string,
   storeBudgetCents?: number,
 ) {
+  async function usdLimit() {
+    if (storeBudgetCents === undefined) return budgetCents;
+    const rate = await usdKesRate();
+    return Math.min(budgetCents, Math.floor(storeBudgetCents / rate.kesPerUsd));
+  }
   return {
     search_store_books: tool({
       description:
@@ -51,7 +57,7 @@ export function shoppingTools(
         maxPriceCents: z.number().int().nonnegative().optional(),
       }),
       execute: async ({ query, maxPriceCents }) => {
-        const max = Math.min(budgetCents, maxPriceCents ?? budgetCents);
+        const max = Math.min(await usdLimit(), maxPriceCents ?? budgetCents);
         const products = (await searchProducts(query, max)).slice(0, 3);
         const general =
           /^(?:(?:fun|something|anything|gift|gifts|browse|all|affordable|cheap|budget|items|products)|\s)*$/i.test(
@@ -60,7 +66,7 @@ export function shoppingTools(
         try {
           const result = await searchAffordableBooks(
             general ? "" : query,
-            max,
+            Math.min(budgetCents, maxPriceCents ?? budgetCents),
             storeBudgetCents,
           );
           return {
@@ -89,7 +95,7 @@ export function shoppingTools(
       inputSchema: z.object({ id: z.string().max(80) }),
       execute: async ({ id }) => {
         const product = await getProduct(id);
-        return product?.available && product.priceCents <= budgetCents
+        return product?.available && product.priceCents <= (await usdLimit())
           ? product
           : { error: "Product unavailable or outside the shopper budget" };
       },
@@ -99,7 +105,7 @@ export function shoppingTools(
         "Prepare a review quote for a chosen product. The shopper must separately approve it and pay with PayPal.",
       inputSchema: z.object({ productId: z.string().max(80) }),
       execute: async ({ productId }) =>
-        prepareQuote(sessionId, productId, budgetCents, ref),
+        prepareQuote(sessionId, productId, await usdLimit(), ref),
     }),
   };
 }
