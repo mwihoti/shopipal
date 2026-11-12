@@ -1,5 +1,7 @@
 "use client";
 import Link from "next/link";
+import { MarketMatches } from "./MarketMatches";
+import { publicHttpsUrl, type MarketProduct } from "@/lib/market-types";
 import { ClosingSection } from "./ClosingSection";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useChat } from "@ai-sdk/react";
@@ -252,7 +254,7 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
                   <div className="suggestions">
                     {[
                       "Running shoes under $80",
-                      "An everyday bag under $50",
+                      "Search retailers for reading books under $10",
                       "Find a printable book from the book store",
                     ].map((s) => (
                       <button
@@ -320,6 +322,35 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
                       {m.parts.map((part, i) => {
                         if (part.type === "text")
                           return <p key={i}>{part.text}</p>;
+                        if (
+                          part.type === "tool-search_market_products" &&
+                          "output" in part &&
+                          part.state === "output-available"
+                        ) {
+                          const output = part.output as {
+                            products?: MarketProduct[];
+                            error?: string;
+                          };
+                          return (
+                            <div key={i}>
+                              <MarketMatches
+                                products={(output.products || []).filter((p) =>
+                                  firstMatch(
+                                    `market:${p.id}`,
+                                    p.currency === "USD" &&
+                                      Number.isSafeInteger(p.priceCents) &&
+                                      p.priceCents > 0 &&
+                                      p.priceCents <= limits.usdCents &&
+                                      publicHttpsUrl(p.url),
+                                  ),
+                                )}
+                              />
+                              {output.error ? (
+                                <p role="status">{output.error}</p>
+                              ) : null}
+                            </div>
+                          );
+                        }
                         if (
                           part.type === "tool-search_store_books" &&
                           "output" in part &&

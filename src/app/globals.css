@@ -1317,3 +1317,59 @@ a {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
+.market-matches {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+.market-match {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px;
+  background: var(--paper, #fff);
+  border: 1px solid #d7ddca;
+  border-radius: 10px;
+  color: inherit;
+  text-decoration: none;
+  transition:
+    border-color 0.2s,
+    transform 0.2s;
+}
+.market-match:hover {
+  border-color: #7a915c;
+  transform: translateY(-2px);
+}
+.market-match:focus-visible {
+  outline: 2px solid #607a43;
+  outline-offset: 3px;
+}
+.market-match img {
+  flex-shrink: 0;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 6px;
+}
+.market-match > span {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.market-match small {
+  color: #687653;
+}
+.market-note {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #687653;
+}
+@media (prefers-reduced-motion: reduce) {
+  .market-match {
+    transition: none;
+  }
+  .market-match:hover {
+    transform: none;
+  }
+}

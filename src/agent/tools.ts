@@ -1,3 +1,4 @@
+import { searchMarketProducts } from "@/lib/channel3";
 import { usdKesRate } from "@/lib/exchange-rate";
 import { searchAffordableBooks, affordableBook } from "@/lib/book-budget";
 import { tool } from "ai";
@@ -86,6 +87,28 @@ export function shoppingTools(
               error instanceof Error ? error.message : "Book store unavailable",
             message:
               "Only the USD catalog was checked. Do not say no affordable items exist across both stores: book prices could not be checked.",
+          };
+        }
+      },
+    }),
+    search_market_products: tool({
+      description:
+        "Search real external retailer listings through Channel3. Use for market searches, reading books, or items missing from the connected catalogs. Requires a short nonempty product query. Returns up to three affordable USD offers with images and retailer checkout links. These cannot be purchased through the sandbox checkout tools.",
+      inputSchema: z.object({
+        query: z.string().trim().min(1).max(200),
+        maxPriceCents: z.number().int().positive().optional(),
+      }),
+      execute: async ({ query, maxPriceCents }) => {
+        try {
+          return await searchMarketProducts(
+            query,
+            Math.min(await usdLimit(), maxPriceCents ?? budgetCents),
+          );
+        } catch {
+          return {
+            products: [],
+            error:
+              "Retailer search is unavailable. No external listings were verified; try again later. The connected book store and sandbox collection remain separate options.",
           };
         }
       },

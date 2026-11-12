@@ -1,3 +1,10 @@
+vi.mock("../src/lib/channel3", () => ({
+  searchMarketProducts: vi.fn(async (_query: string, budgetCents: number) => ({
+    products: [],
+    budgetCents,
+  })),
+}));
+import { searchMarketProducts } from "../src/lib/channel3";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("../src/lib/exchange-rate", async (original) => ({
   ...(await original<typeof import("../src/lib/exchange-rate")>()),
@@ -142,4 +149,13 @@ it("also compares USD demo items against a typed KES budget", async () => {
   await expect(
     tools.prepare_checkout.execute!({ productId: "socks" }, options),
   ).rejects.toThrow("budget");
+});
+
+it("clamps external retailer searches to typed KES and USD budgets", async () => {
+  const tools = shoppingTools("session", 499, undefined, 13000);
+  await tools.search_market_products.execute!(
+    { query: "books", maxPriceCents: 8000 },
+    options,
+  );
+  expect(searchMarketProducts).toHaveBeenLastCalledWith("books", 100);
 });

@@ -239,6 +239,7 @@ describe("trusted checkout", () => {
       "search_store_books",
       "prepare_store_checkout",
       "search_products",
+      "search_market_products",
       "get_product",
       "prepare_checkout",
     ]);

@@ -154,3 +154,67 @@ test("a dollar budget includes affordable KES books with a converted estimate", 
     page.getByRole("dialog").getByText(/Estimated at 1 USD = 130.0000 KES/),
   ).toBeVisible();
 });
+
+test("retailer cards use external checkout and hide unsafe or over-budget offers", async ({
+  page,
+}) => {
+  const product = {
+    id: "retailer-book",
+    title: "A real reading book",
+    retailer: "books.example",
+    url: "https://books.example/buy?id=1",
+    priceCents: 425,
+    currency: "USD",
+  };
+  const events = [
+    { type: "start", messageId: "market-reply" },
+    { type: "start-step" },
+    {
+      type: "tool-input-available",
+      toolCallId: "market",
+      toolName: "search_market_products",
+      input: { query: "reading books" },
+    },
+    {
+      type: "tool-output-available",
+      toolCallId: "market",
+      output: {
+        products: [
+          product,
+          {
+            ...product,
+            id: "expensive",
+            title: "Too expensive",
+            priceCents: 600,
+          },
+          { ...product, id: "unsafe", url: "javascript:alert(1)" },
+        ],
+      },
+    },
+    { type: "finish-step" },
+    { type: "finish" },
+  ];
+  await page.route("**/api/chat", (r) =>
+    r.fulfill({
+      contentType: "text/event-stream",
+      headers: { "x-vercel-ai-ui-message-stream": "v1" },
+      body:
+        events.map((e) => `data: ${JSON.stringify(e)}\n\n`).join("") +
+        "data: [DONE]\n\n",
+    }),
+  );
+  await page.goto("/");
+  await page
+    .getByLabel("What are you looking for?")
+    .fill("Search retailers for reading books under $5");
+  await page.getByRole("button", { name: "Send message", exact: true }).click();
+  const cards = page.locator(".market-match");
+  await expect(cards).toHaveCount(1);
+  await expect(cards).toHaveAttribute("href", product.url);
+  await expect(cards).toHaveAttribute("target", "_blank");
+  await expect(cards).toContainText("$4.25");
+  await expect(page.locator(".market-note")).toContainText(
+    "Checkout is at the retailer",
+  );
+  await expect(page.locator(".chat-message.assistant .primary")).toHaveCount(0);
+});
