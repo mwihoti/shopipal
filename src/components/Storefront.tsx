@@ -23,7 +23,7 @@ import { chatLimits } from "@/lib/chat-budget";
 import { money } from "@/lib/money";
 import { request } from "@/lib/client";
 import { BookStore, StoreBookReview } from "./BookStore";
-import { storeMoney, type StoreBook } from "@/lib/store-types";
+import { bookPrice, type StoreBook } from "@/lib/store-types";
 import { ProductCard } from "./ProductCard";
 import { PurchaseDialog } from "./PurchaseDialog";
 import { ApprovalCard, ReceiptCard } from "./ApprovalCard";
@@ -279,6 +279,40 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
                     seen.add(id);
                     return true;
                   }
+                  function renderBooks(
+                    books: StoreBook[],
+                    key: number | string,
+                  ) {
+                    return (
+                      <div className="chat-matches" key={key}>
+                        {books
+                          .filter((b) =>
+                            firstMatch(
+                              b.variantId,
+                              b.usdEstimate !== undefined &&
+                                b.usdEstimate.cents <= limits.usdCents &&
+                                (limits.kesCents === undefined ||
+                                  Math.round(Number(b.amount) * 100) <=
+                                    limits.kesCents),
+                            ),
+                          )
+                          .map((b) => (
+                            <button
+                              key={b.variantId}
+                              onClick={() => reviewBook(b)}
+                            >
+                              <span>
+                                {b.title}
+                                <small>Shopify store · KES</small>
+                              </span>
+                              <strong>
+                                {bookPrice(b)} <ArrowUpRight size={14} />
+                              </strong>
+                            </button>
+                          ))}
+                      </div>
+                    );
+                  }
                   return (
                     <div key={m.id} className={`chat-message ${m.role}`}>
                       <span className="eyebrow">
@@ -295,33 +329,7 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
                           const output = part.output as {
                             products?: StoreBook[];
                           };
-                          return (
-                            <div className="chat-matches" key={i}>
-                              {output.products
-                                ?.filter((b) =>
-                                  firstMatch(
-                                    b.variantId,
-                                    limits.kesCents === undefined ||
-                                      Math.round(Number(b.amount) * 100) <=
-                                        limits.kesCents,
-                                  ),
-                                )
-                                .map((b) => (
-                                  <button
-                                    key={b.variantId}
-                                    onClick={() => reviewBook(b)}
-                                  >
-                                    <span>
-                                      {b.title}
-                                      <small>Shopify store · KES</small>
-                                    </span>
-                                    <strong>
-                                      {storeMoney(b)} <ArrowUpRight size={14} />
-                                    </strong>
-                                  </button>
-                                ))}
-                            </div>
-                          );
+                          return renderBooks(output.products || [], i);
                         }
                         if (
                           part.type === "tool-prepare_store_checkout" &&
@@ -330,8 +338,11 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
                         ) {
                           const b = part.output as StoreBook;
                           if (
-                            limits.kesCents !== undefined &&
-                            Math.round(Number(b.amount) * 100) > limits.kesCents
+                            !b.usdEstimate ||
+                            b.usdEstimate.cents > limits.usdCents ||
+                            (limits.kesCents !== undefined &&
+                              Math.round(Number(b.amount) * 100) >
+                                limits.kesCents)
                           )
                             return null;
                           return (
@@ -351,32 +362,36 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
                         ) {
                           const output = part.output as {
                             products?: Product[];
+                            books?: StoreBook[];
                           };
                           return (
-                            <div className="chat-matches" key={i}>
-                              {output.products
-                                ?.filter((p) =>
-                                  firstMatch(
-                                    p.id,
-                                    p.priceCents <= limits.usdCents,
-                                  ),
-                                )
-                                .map((p) => (
-                                  <button
-                                    key={p.id}
-                                    disabled={busy}
-                                    onClick={() => void select(p)}
-                                  >
-                                    <span>
-                                      {p.title}
-                                      <small>{p.color}</small>
-                                    </span>
-                                    <strong>
-                                      {money(p.priceCents)}{" "}
-                                      <ArrowUpRight size={14} />
-                                    </strong>
-                                  </button>
-                                ))}
+                            <div key={i}>
+                              <div className="chat-matches" key={i}>
+                                {output.products
+                                  ?.filter((p) =>
+                                    firstMatch(
+                                      p.id,
+                                      p.priceCents <= limits.usdCents,
+                                    ),
+                                  )
+                                  .map((p) => (
+                                    <button
+                                      key={p.id}
+                                      disabled={busy}
+                                      onClick={() => void select(p)}
+                                    >
+                                      <span>
+                                        {p.title}
+                                        <small>{p.color}</small>
+                                      </span>
+                                      <strong>
+                                        {money(p.priceCents)}{" "}
+                                        <ArrowUpRight size={14} />
+                                      </strong>
+                                    </button>
+                                  ))}
+                              </div>
+                              {renderBooks(output.books || [], `books-${i}`)}
                             </div>
                           );
                         }
@@ -605,6 +620,13 @@ export function Storefront({ previewMode = false }: { previewMode?: boolean }) {
         </Link>
         <p>A little help goes a long way.</p>
         <span>PayPal demo · Sandbox only. Book store · Shopify checkout.</span>
+        <a
+          href="https://www.exchangerate-api.com"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Rates By Exchange Rate API
+        </a>
       </footer>
       {book ? (
         <PurchaseDialog onClose={closePanel}>

@@ -11,12 +11,12 @@ Built for the PayPal AI Hackathon. The app has two shopping flows:
 | PayPal demo        | 12 sample products in USD; maximum $80 per purchase | PayPal **sandbox**, using a personal sandbox buyer           | Shopipal merchant studio, including referral commissions      |
 | Shopify book store | Published books from pdf-color game, priced in KES  | The store's **Shopify checkout**, using its payment settings | Shopify order admin; digital delivery is managed by the store |
 
-The Shopify store is separate from the PayPal sandbox demo. Its checkout may charge real money. Review the final total and payment method there before paying. The USD demo cap and demo referral commissions do not apply to Shopify purchases.
+The Shopify store is separate from the PayPal sandbox demo. Its checkout may charge real money. Review the final total and payment method there before paying. Chat uses the USD budget ceiling and exchange-rate estimates to compare items across both catalogs. Shopify still controls the final payable total and payment settings; demo referral commissions do not apply to its purchases.
 
 ## What works
 
 - Conversational discovery through OpenRouter and the Vercel AI SDK, with server-side catalog tools and a five-step execution limit.
-- Twelve illustrated demo products, category filters, and a shopper-controlled USD budget. Explicit price limits such as “under 5 dollars” or “less than $5” also constrain chat results and review quotes; follow-up messages keep the last stated limit until it is changed. USD and KES limits stay separate.
+- Twelve illustrated demo products, category filters, and a shopper-controlled USD budget. Explicit price limits such as “under 5 dollars” or “less than $5” also constrain chat results and review quotes; follow-up messages keep the last stated limit until it is changed. KES book prices are converted to estimated USD when checking a dollar budget; an explicit KES limit is also respected.
 - Server-priced quotes, explicit purchase approval, and PayPal Orders v2 checkout.
 - Session ownership, quote expiry, merchant and amount verification, idempotent requests, and interrupted-capture recovery.
 - `?ref=alice` (15%) and `?ref=bob` (10%) attribution, recorded only after a completed sandbox capture.
@@ -64,7 +64,7 @@ A completed $16.00 sandbox purchase with Alice's $2.40 commission has been demon
 ## Try book discovery and Shopify checkout
 
 1. Open the [live app](https://shopipal.vercel.app) and select **Book store**, or scroll to the book collection.
-2. Ask **“Find a printable colouring book under 150 KES.”** State book budgets in **KES**, not USD.
+2. Ask **“Find a printable colouring book under 150 KES.”** You can also ask **“Show me something fun under $5”**. The assistant checks both catalogs and converts KES book prices to estimated USD.
 3. Select a returned book and review its title, variant, price, description, and store listing.
 4. Click **I approve · Continue to Shopify** to create a one-item cart and open the store's checkout. Prices and availability are checked again before handoff.
 5. Review Shopify's final total and available payment methods before deciding whether to pay. Your PayPal demo sandbox buyer login is not a general Shopify login, and the store does not inherit Shopipal's sandbox payment configuration.
@@ -135,6 +135,8 @@ Put the result in `SESSION_SECRET`, then visit `/dashboard` to sign in. Sessions
 ### Shopify connection
 
 The store integration uses tokenless Storefront API access, pinned to `2026-10`. No Shopify Admin API token is needed in Vercel or shipped to the browser. It reads up to 30 published products and 10 variants per product. The store link provides access to the full catalog.
+
+Currency comparisons use the daily USD/KES feed from [ExchangeRate-API](https://www.exchangerate-api.com/docs/free), cached for one hour. Rates older than 48 hours are rejected. USD estimates round upward to the nearest cent for budget checks; the rate and update date appear on a book review. If rates are unavailable, the assistant reports that it cannot verify dollar affordability rather than assuming no affordable books exist. Conversion is checked again before a budgeted Shopify cart is created. Final checkout exchange rates, taxes, and payment fees can differ.
 
 Shopify handles its checkout, payment methods, final taxes/total, order creation, and digital fulfillment. Book download files and delivery must be configured in Shopify. See [Shopify cart and checkout documentation](https://shopify.dev/docs/storefronts/headless/building-with-the-storefront-api/cart/manage).
 

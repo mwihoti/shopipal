@@ -145,3 +145,24 @@ describe("Shopify book checkout", () => {
     await expect(searchStoreBooks()).rejects.toThrow("temporarily unavailable");
   });
 });
+
+it("rechecks USD affordability before creating a Shopify cart", async () => {
+  const fetcher = vi
+    .fn()
+    .mockResolvedValueOnce(response({ node: { ...variant, product } }))
+    .mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          result: "success",
+          base_code: "USD",
+          time_last_update_unix: Math.floor(Date.now() / 1000),
+          rates: { KES: 20 },
+        }),
+      ),
+    );
+  vi.stubGlobal("fetch", fetcher);
+  await expect(createStoreCheckout(id, "130.00", "KES", 499)).rejects.toThrow(
+    "above your USD budget",
+  );
+  expect(fetcher).toHaveBeenCalledTimes(2);
+});

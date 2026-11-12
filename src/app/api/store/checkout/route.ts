@@ -12,6 +12,7 @@ export async function POST(request: Request) {
         expectedAmount: z.string().regex(/^\d+(\.\d{1,2})?$/),
         currency: z.literal("KES"),
         approved: z.literal(true),
+        maxUsdCents: z.number().int().nonnegative().max(8000).optional(),
       }),
     );
     await guardRate(request, await session(), "store-cart", 10);
@@ -20,6 +21,7 @@ export async function POST(request: Request) {
         payload.variantId,
         payload.expectedAmount,
         payload.currency,
+        payload.maxUsdCents,
       ),
     );
   } catch (e) {

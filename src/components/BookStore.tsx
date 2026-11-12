@@ -3,7 +3,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { ArrowUpRight, X } from "lucide-react";
 import { request } from "@/lib/client";
-import { STORE_URL, storeMoney, type StoreBook } from "@/lib/store-types";
+import { STORE_URL, bookPrice, type StoreBook } from "@/lib/store-types";
 
 export function StoreBookCard({
   book,
@@ -39,7 +39,7 @@ export function StoreBookCard({
           {book.description.slice(0, 180)}
           {book.description.length > 180 ? "…" : ""}
         </p>
-        <strong>{storeMoney(book)}</strong>
+        <strong>{bookPrice(book)}</strong>
         <button className="text-button" onClick={() => onReview(book)}>
           Review book <ArrowUpRight size={14} />
         </button>
@@ -104,9 +104,10 @@ export function BookStore({
         using the store’s payment settings.
       </p>
       <p className="collection-note">
-        The $80 USD budget applies to the sandbox collection below. For books,
-        tell your pal your budget in KES. Store purchases and digital delivery
-        are managed in Shopify.
+        Ask in USD or KES. Your pal compares book prices with dollar budgets
+        using an estimated exchange rate. Shopify charges in KES; final
+        conversion and payment fees can differ. Store purchases and digital
+        delivery are managed in Shopify.
       </p>
       {loading ? (
         <p role="status">Loading books from the store…</p>
@@ -159,6 +160,9 @@ export function StoreBookReview({
             expectedAmount: book.amount,
             currency: book.currency,
             approved: true,
+            ...(book.maxUsdCents === undefined
+              ? {}
+              : { maxUsdCents: book.maxUsdCents }),
           }),
         },
       );
@@ -195,9 +199,24 @@ export function StoreBookReview({
         </div>
         <div>
           <dt>Book price</dt>
-          <dd>{storeMoney(book)}</dd>
+          <dd>{bookPrice(book)}</dd>
         </div>
       </dl>
+      {book.usdEstimate ? (
+        <p className="tiny muted">
+          Estimated at 1 USD = {book.usdEstimate.kesPerUsd.toFixed(4)} KES. Rate
+          updated{" "}
+          {new Date(book.usdEstimate.updatedAt).toISOString().slice(0, 10)} UTC.{" "}
+          <a
+            href="https://www.exchangerate-api.com"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Rates By Exchange Rate API
+          </a>
+          . This is an estimate; checkout conversion and fees may differ.
+        </p>
+      ) : null}
       <p className="muted">
         You’re leaving the PayPal sandbox demo for the store’s Shopify checkout.
         Its payment settings apply and may charge real money. Review the final

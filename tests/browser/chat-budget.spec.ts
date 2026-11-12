@@ -81,3 +81,76 @@ test("shows an affordable result once when the model repeats a search", async ({
   await expect(reply.locator(".chat-matches button")).toHaveCount(1);
   await expect(reply.getByText("Cloud Crew")).toBeVisible();
 });
+
+test("a dollar budget includes affordable KES books with a converted estimate", async ({
+  page,
+}) => {
+  const book = {
+    variantId: "gid://shopify/ProductVariant/1",
+    title: "Fun colouring book",
+    variantTitle: "",
+    description: "Printable PDF",
+    image: null,
+    productUrl: "https://pdf-color-games.myshopify.com/products/fun",
+    amount: "130.00",
+    currency: "KES",
+    maxUsdCents: 499,
+    usdEstimate: {
+      cents: 100,
+      kesPerUsd: 130,
+      updatedAt: "2026-11-12T00:00:00.000Z",
+    },
+  };
+  const events = [
+    { type: "start", messageId: "converted" },
+    { type: "start-step" },
+    {
+      type: "tool-input-available",
+      toolCallId: "fx",
+      toolName: "search_products",
+      input: { query: "fun" },
+    },
+    {
+      type: "tool-output-available",
+      toolCallId: "fx",
+      output: {
+        products: [],
+        books: [
+          book,
+          {
+            ...book,
+            variantId: "gid://shopify/ProductVariant/2",
+            title: "Expensive book",
+            usdEstimate: { ...book.usdEstimate, cents: 600 },
+          },
+        ],
+      },
+    },
+    { type: "finish-step" },
+    { type: "finish" },
+  ];
+  await page.route("**/api/chat", (r) =>
+    r.fulfill({
+      contentType: "text/event-stream",
+      headers: { "x-vercel-ai-ui-message-stream": "v1" },
+      body:
+        events.map((e) => `data: ${JSON.stringify(e)}\n\n`).join("") +
+        "data: [DONE]\n\n",
+    }),
+  );
+  await page.goto("/");
+  await page
+    .getByLabel("What are you looking for?")
+    .fill("Show me something fun under $5");
+  await page.getByRole("button", { name: "Send message", exact: true }).click();
+  const reply = page.locator(".chat-message.assistant");
+  await expect(
+    reply.getByRole("button", { name: /Fun colouring book/ }),
+  ).toBeVisible();
+  await expect(reply.getByText(/≈ \$1.00 USD/)).toBeVisible();
+  await expect(reply.getByText("Expensive book")).toHaveCount(0);
+  await reply.getByRole("button", { name: /Fun colouring book/ }).click();
+  await expect(
+    page.getByRole("dialog").getByText(/Estimated at 1 USD = 130.0000 KES/),
+  ).toBeVisible();
+});

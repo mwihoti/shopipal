@@ -1,3 +1,4 @@
+import { usdKesRate, kesToUsdCents } from "./exchange-rate";
 import { z } from "zod";
 import { AppError } from "./config";
 import { STORE_BOOK, STORE_BOOKS, STORE_CART } from "./shopify-operations";
@@ -113,6 +114,7 @@ export async function createStoreCheckout(
   variantId: string,
   expectedAmount: string,
   currency: string,
+  maxUsdCents?: number,
 ) {
   const selected = await getStoreBook(variantId);
   if (
@@ -122,6 +124,14 @@ export async function createStoreCheckout(
     throw new AppError(
       409,
       "The book price changed. Refresh the collection and review it again.",
+    );
+  if (
+    maxUsdCents !== undefined &&
+    kesToUsdCents(selected.amount, await usdKesRate()) > maxUsdCents
+  )
+    throw new AppError(
+      409,
+      "The estimated exchange rate now puts this book above your USD budget. Review your budget again.",
     );
   const result = await storefront(
     STORE_CART,

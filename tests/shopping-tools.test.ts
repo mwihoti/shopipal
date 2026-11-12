@@ -1,4 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+vi.mock("../src/lib/exchange-rate", async (original) => ({
+  ...(await original<typeof import("../src/lib/exchange-rate")>()),
+  usdKesRate: vi.fn(async () => ({
+    kesPerUsd: 130,
+    updatedAt: "2026-11-12T00:00:00.000Z",
+  })),
+}));
 vi.mock("../src/lib/catalog", () => ({
   searchProducts: vi.fn(async (_query: string, max: number) =>
     [{ id: "socks", available: true, priceCents: 1600 }].filter(
@@ -50,6 +57,7 @@ describe("trusted agent budgets", () => {
       expect(await search({ query: "" }, options)).toMatchObject({
         products: [],
         budgetCents: 499,
+        books: [{ amount: "130.00", usdEstimate: { cents: 100 } }],
       });
       expect(
         await search({ query: "", maxPriceCents: 8000 }, options),
@@ -90,4 +98,35 @@ describe("trusted agent budgets", () => {
       ),
     ).rejects.toThrow("KES budget");
   });
+});
+
+it("finds KES 130 books under a $5 USD budget in a general fun search", async () => {
+  const tools = shoppingTools("session", 499);
+  const output = await tools.search_products.execute!(
+    { query: "fun" },
+    options,
+  );
+  expect(output).toMatchObject({
+    products: [],
+    books: [
+      {
+        amount: "130.00",
+        currency: "KES",
+        maxUsdCents: 499,
+        usdEstimate: { cents: 100, kesPerUsd: 130 },
+      },
+    ],
+  });
+});
+it("does not admit a KES 130 book under a $0.50 budget", async () => {
+  const tools = shoppingTools("session", 50);
+  expect(
+    await tools.search_store_books.execute!({ query: "" }, options),
+  ).toMatchObject({ products: [] });
+  await expect(
+    tools.prepare_store_checkout.execute!(
+      { variantId: "gid://shopify/ProductVariant/1" },
+      options,
+    ),
+  ).rejects.toThrow("USD budget");
 });
